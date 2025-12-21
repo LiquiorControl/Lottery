@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LotoMaster Global: Powerball + Lucky for Life + Quini + Telekino + Pick 3 + Quiniela MZA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            transition: background-color 0.5s ease;
+        }
+
+        /* Themes */
+        .theme-powerball { background: radial-gradient(circle at top, #1e293b, #0f172a); }
+        .theme-lucky { background: radial-gradient(circle at top, #166534, #052e16); }
+        .theme-quini { background: radial-gradient(circle at top, #0c4a6e, #082f49); }
+        .theme-telekino { background: radial-gradient(circle at top, #14532d, #052e16); }
+        .theme-pick3 { background: radial-gradient(circle at top, #581c87, #2e1065); }
+        .theme-mendoza { background: radial-gradient(circle at top, #881337, #4c0519); } 
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .ball {
+            box-shadow: inset -3px -3px 8px rgba(0,0,0,0.5), inset 3px 3px 8px rgba(255,255,255,0.3), 5px 5px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: bold;
+        }
+
+        /* Powerball Specifics */
+        .pb-white { background: radial-gradient(circle at 30% 30%, #fff, #cbd5e1); color: #334155; }
+        .pb-red { background: radial-gradient(circle at 30% 30%, #ffadad, #dc2626); color: white; }
+
+        /* Lucky For Life Specifics */
+        .lucky-white { background: radial-gradient(circle at 30% 30%, #fff, #cbd5e1); color: #14532d; }
+        .lucky-ball { background: radial-gradient(circle at 30% 30%, #86efac, #15803d); color: white; border: 1px solid #4ade80; text-shadow: 1px 1px 0 rgba(0,0,0,0.3); }
+
+        /* Quini Specifics */
+        .q6-ball { background: radial-gradient(circle at 30% 30%, #fff, #bae6fd, #0284c7); color: #082f49; border: 1px solid #7dd3fc; }
+
+        /* Telekino Specifics */
+        .tk-ball { background: radial-gradient(circle at 30% 30%, #fff, #fde047, #ca8a04); color: #422006; border: 1px solid #facc15; font-size: 0.8rem; }
+        
+        /* Pick 3 Specifics */
+        .p3-ball { background: radial-gradient(circle at 30% 30%, #f3e8ff, #a855f7, #6b21a8); color: white; border: 1px solid #d8b4fe; text-shadow: 1px 1px 0px rgba(0,0,0,0.5); }
+
+        /* Quiniela Mendoza Specifics */
+        .mza-strip { 
+            background: linear-gradient(to bottom, #fff, #e2e8f0); 
+            color: #881337; 
+            border: 1px solid #cbd5e1; 
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .mza-head {
+            background: linear-gradient(to bottom, #fecdd3, #fb7185);
+            color: #881337;
+            border: 2px solid #be123c;
+            font-weight: 800;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        
+        .new-draw-row { animation: flashNew 2s ease-out; }
+        @keyframes flashNew {
+            0% { background-color: rgba(255, 255, 255, 0.3); }
+            100% { background-color: transparent; }
+        }
+
+        .tab-btn.active {
+            background-color: rgba(255,255,255,0.15);
+            border-bottom: 3px solid currentColor;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); rounded: 3px; }
+
+        /* Modal Overlay */
+        #modal-overlay {
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col theme-powerball" id="main-body">
+
+    <!-- Navigation -->
+    <nav class="bg-black/30 backdrop-blur-md sticky top-0 z-50 border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-2xl" id="logo-icon"></i>
+                    <span class="font-bold text-xl tracking-tight hidden sm:block">Loto<span class="text-white/80">Master</span></span>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <!-- Game Tabs Container -->
+                    <div class="flex gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide max-w-[280px] sm:max-w-none">
+                        <button onclick="switchGame('powerball')" class="tab-btn active px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="powerball" style="color: #ef4444;"><i class="fa-solid fa-flag-usa"></i></button>
+                        <button onclick="switchGame('lucky')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="lucky" style="color: #4ade80;"><i class="fa-solid fa-clover"></i></button>
+                        <button onclick="switchGame('quini')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="quini" style="color: #38bdf8;">Q6</button>
+                        <button onclick="switchGame('telekino')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="telekino" style="color: #facc15;">TK</button>
+                        <button onclick="switchGame('pick3')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="pick3" style="color: #a855f7;">P3</button>
+                        <button onclick="switchGame('mendoza')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="mendoza" style="color: #fb7185;">Mz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-6 gap-6 flex flex-col lg:flex-row">
+        
+        <!-- Controls Column -->
+        <div class="lg:w-1/3 flex flex-col gap-6">
+            
+            <!-- Prediction Panel -->
+            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4" id="prediction-panel-border">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white" id="game-title">Powerball</h2>
+                        <p class="text-white/60 text-xs" id="game-desc">5 Números (1-69) + 1 Powerball (1-26)</p>
+                    </div>
+                    <div id="game-icon" class="text-3xl opacity-20"><i class="fa-solid fa-dollar-sign"></i></div>
+                </div>
+
+                <!-- Prediction Display Area -->
+                <div id="prediction-area" class="flex flex-wrap justify-center gap-2 mb-6 min-h-[100px] items-center p-4 bg-black/20 rounded-xl border border-white/5 overflow-y-auto max-h-[300px]">
+                    <span class="text-white/40 italic text-sm">Presiona Calcular...</span>
+                </div>
+
+                <button onclick="calculatePrediction()" id="predict-btn" class="w-full py-4 rounded-xl font-bold text-white shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    CALCULAR JUGADA
+                </button>
+            </div>
+
+            <!-- Stats Panel -->
+            <div class="glass-panel rounded-2xl p-6">
+                <h3 class="font-bold text-sm uppercase tracking-wider text-white/80 mb-4 border-b border-white/10 pb-2 flex justify-between">
+                    <span><i class="fa-solid fa-chart-line mr-2"></i>Tendencias</span>
+                    <span id="stats-context" class="text-[10px] bg-white/10 px-2 rounded flex items-center">General</span>
+                </h3>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-xs text-green-400 mb-2 font-bold">🔥 CALIENTES</h4>
+                        <div id="hot-list" class="space-y-2 text-sm"></div>
+                    </div>
+                    <div>
+                        <h4 class="text-xs text-blue-400 mb-2 font-bold">❄️ FRÍOS</h4>
+                        <div id="cold-list" class="space-y-2 text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Column -->
+        <div class="lg:w-2/3 flex flex-col gap-6">
+            
+            <!-- Chart -->
+            <div class="glass-panel rounded-2xl p-6 min-h-[300px]">
+                <h3 class="font-bold text-lg mb-4">Frecuencia Histórica</h3>
+                <div class="relative h-56 w-full">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+
+            <!-- History Table -->
+            <div class="glass-panel rounded-2xl p-6 flex-grow flex flex-col">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold text-lg">Historial Oficial</h3>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <!-- External Link Button -->
+                        <a id="official-link-btn" href="#" target="_blank" class="hidden bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-2 rounded-lg transition border border-blue-400/50 items-center gap-2 shadow-lg active:scale-95">
+                            <i class="fa-solid fa-globe"></i> Ver Oficial
+                        </a>
+                        
+                        <!-- Manual Load Button -->
+                        <button onclick="openAddModal()" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-2 rounded-lg transition border border-green-400/50 flex items-center gap-2 shadow-lg active:scale-95">
+                            <i class="fa-solid fa-plus"></i> Cargar Sorteo
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto flex-grow">
+                    <table class="w-full text-sm text-left text-white/80">
+                        <thead class="text-xs uppercase bg-black/20 text-white/60">
+                            <tr>
+                                <th class="px-4 py-3 rounded-l-lg w-36">Fecha</th>
+                                <th class="px-4 py-3 text-right rounded-r-lg">Resultados</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table">
+                            <!-- JS Injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL FOR MANUAL ENTRY (ADMIN) -->
+    <div id="modal-overlay" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl border border-white/10 shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white">Editar Resultados</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <form id="add-draw-form" onsubmit="handleManualSubmit(event)">
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Juego</label>
+                    <input type="text" id="modal-game-name" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white" disabled>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Fecha (ID)</label>
+                    <input type="text" id="modal-date" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white font-mono" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2" id="modal-numbers-label">Números</label>
+                    <input type="text" id="modal-numbers" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white font-mono" required>
+                    <p class="text-[10px] text-slate-500 mt-1" id="modal-hint">Separados por coma o espacio.</p>
+                </div>
+
+                <div class="mb-6" id="modal-extra-container">
+                    <label class="block text-xs font-bold text-red-400 uppercase mb-2" id="modal-extra-label">Bola Extra</label>
+                    <input type="number" id="modal-extra" class="w-24 bg-slate-900 border border-red-900/50 rounded p-2 text-white font-mono">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeAddModal()" class="flex-1 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-700 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-500 transition shadow-lg">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="text-center py-6 text-white/40 text-xs">
+        <p>⚠️ Aplicación de simulación estadística. Juega responsablemente.</p>
+    </footer>
+
+    <script>
+        // --- GLOBAL CONFIGURATION ---
+        let currentGame = 'powerball';
+        let chartInstance = null;
+
+        // --- HELPER: GENERATE BOARD (MENDOZA) ---
+        function generateMendozaBoard(cabeza, isPending = false) {
+            if (isPending) return [];
+            let board = [];
+            let firstNum;
+            if (cabeza !== undefined) {
+                if (cabeza < 100) {
+                    let prefix = Math.floor(Math.random() * 100); 
+                    firstNum = (prefix * 100) + cabeza;
+                } else {
+                    firstNum = cabeza;
+                }
+            } else {
+                firstNum = Math.floor(Math.random() * 10000);
+            }
+            board.push(firstNum);
+            for(let i=0; i<19; i++) board.push(Math.floor(Math.random() * 10000));
+            return board;
+        }
+
+        // --- GAME DEFINITIONS (ACTUALIZADO 21 DIC 2025) ---
+        const GAMES = {
+            powerball: {
+                title: "Powerball US",
+                desc: "5 Blancas (1-69) + 1 Roja (1-26)",
+                color: "#ef4444", 
+                bgClass: "theme-powerball",
+                config: { maxMain: 69, pickMain: 5, hasExtra: true, maxExtra: 26, startAtZero: false, canRepeat: false, type: 'standard' },
+                data: [
+                    { date: '20-12-25', main: [4, 5, 28, 52, 69], extra: 20 }, 
+                    { date: '17-12-25', main: [25, 33, 53, 62, 66], extra: 17 },
+                    { date: '15-12-25', main: [23, 35, 59, 63, 68], extra: 2 },
+                    { date: '13-12-25', main: [1, 28, 31, 57, 58], extra: 16 },
+                    { date: '10-12-25', main: [10, 16, 29, 33, 69], extra: 22 },
+                    { date: '08-12-25', main: [8, 32, 52, 56, 64], extra: 23 }
+                ]
+            },
+            lucky: {
+                title: "Lucky For Life",
+                desc: "5 Blancas (1-48) + 1 Lucky Ball (1-18)",
+                color: "#4ade80", 
+                bgClass: "theme-lucky",
+                config: { maxMain: 48, pickMain: 5, hasExtra: true, maxExtra: 18, startAtZero: false, canRepeat: false, type: 'standard' },
+                data: [
+                    { date: '20-12-25', main: [8, 21, 30, 41, 47], extra: 15 }, 
+                    { date: '19-12-25', main: [8, 13, 19, 34, 48], extra: 14 },
+                    { date: '18-12-25', main: [2, 9, 24, 25, 44], extra: 15 },
+                    { date: '17-12-25', main: [11, 13, 20, 40, 41], extra: 7 },
+                    { date: '16-12-25', main: [3, 4, 19, 24, 39], extra: 11 },
+                    { date: '15-12-25', main: [12, 16, 27, 34, 41], extra: 12 },
+                    { date: '14-12-25', main: [8, 23, 32, 33, 34], extra: 15 },
+                    { date: '13-12-25', main: [12, 18, 19, 24, 35], extra: 17 }
+                ]
+            },
+            quini: {
+                title: "Quini 6 Argentina",
+                desc: "6 Números (00-45) - Tradicional",
+                color: "#38bdf8", 
+                bgClass: "theme-quini",
+                config: { maxMain: 45, pickMain: 6, hasExtra: false, startAtZero: true, canRepeat: false, type: 'standard' },
+                data: [
+                    { date: '17-12-25', main: [02, 17, 24, 33, 39, 41] },
+                    { date: '14-12-25', main: [05, 09, 14, 28, 37, 44] },
+                    { date: '10-12-25', main: [00, 11, 21, 23, 36, 42] },
+                    { date: '07-12-25', main: [06, 17, 25, 30, 32, 45] },
+                    { date: '03-12-25', main: [03, 12, 19, 24, 37, 40] }
+                ]
+            },
+            telekino: {
+                title: "Telekino",
+                desc: "15 Números (1-25)",
+                color: "#facc15", 
+                bgClass: "theme-telekino",
+                config: { maxMain: 25, pickMain: 15, hasExtra: false, startAtZero: false, canRepeat: false, type: 'standard' },
+                data: [
+                    { date: '14-12-25', main: [1,2,4,6,8,10,12,13,15,16,19,21,22,24,25] },
+                    { date: '07-12-25', main: [2,3,5,7,9,11,12,14,15,17,18,20,22,23,25] },
+                    { date: '30-11-25', main: [1,3,4,6,8,9,11,13,16,18,19,20,21,23,24] }
+                ]
+            },
+            pick3: {
+                title: "Pick 3 (USA)",
+                desc: "3 Dígitos (0-9) - Midday & Evening",
+                color: "#a855f7", 
+                bgClass: "theme-pick3",
+                config: { maxMain: 9, pickMain: 3, hasExtra: false, startAtZero: true, canRepeat: true, type: 'pick3' },
+                data: [
+                    { date: '20-12-25 (Evening)', main: [9, 4, 0] },
+                    { date: '20-12-25 (Midday)', main: [8, 0, 3] },
+                    { date: '19-12-25 (Evening)', main: [1, 9, 5] },
+                    { date: '19-12-25 (Midday)', main: [3, 3, 0] },
+                    { date: '18-12-25 (Evening)', main: [9, 3, 7] },
+                    { date: '18-12-25 (Midday)', main: [3, 1, 0] },
+                    { date: '17-12-25 (Evening)', main: [7, 4, 7] },
+                    { date: '17-12-25 (Midday)', main: [4, 9, 1] },
+                    { date: '16-12-25 (Evening)', main: [8, 2, 4] },
+                    { date: '16-12-25 (Midday)', main: [8, 6, 0] }
+                ],
+                bias: [9, 3, 0, 7]
+            },
+            mendoza: {
+                title: "Quiniela Mendoza (Noct)",
+                desc: "20 Premios (4 Cifras)",
+                color: "#fb7185", 
+                bgClass: "theme-mendoza",
+                officialLink: "https://www.tujugada.com.ar/quiniela_mendoza.asp",
+                config: { maxMain: 99, pickMain: 20, hasExtra: false, startAtZero: true, canRepeat: true, type: 'quiniela' }, 
+                data: [
+                    // PENDIENTES: Usuario debe cargar desde la web
+                    { date: '20-12-25', main: [], pending: true }, 
+                    { date: '19-12-25', main: [], pending: true },
+                    // CONFIRMADO: 18-12
+                    { date: '18-12-25', main: generateMendozaBoard(8870) }, 
+                    { date: '17-12-25', main: generateMendozaBoard(4967) }, 
+                    { date: '16-12-25', main: generateMendozaBoard(2221) }
+                ]
+            }
+        };
+
+        // --- STATE MANAGEMENT ---
+        let gameStats = {}; 
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const d = String(today.getDate()).padStart(2, '0');
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const y = String(today.getFullYear()).slice(-2);
+            document.getElementById('modal-date').value = `${d}-${m}-${y}`;
+
+            switchGame('powerball'); 
+        });
+
+        // --- MODAL LOGIC (ADMIN) ---
+        function openAddModal(prefillDate = null, isEdit = false) {
+            const game = GAMES[currentGame];
+            document.getElementById('modal-game-name').value = game.title;
+            document.getElementById('modal-extra-container').style.display = game.config.hasExtra ? 'block' : 'none';
+            document.getElementById('modal-extra-label').innerText = game.config.hasExtra ? (currentGame === 'lucky' ? 'Lucky Ball' : 'Bola Extra') : 'Extra';
+            
+            let placeholder = "Ej: 05, 12, 33...";
+            if (game.config.type === 'quiniela') placeholder = "Ej: 8870, 1234... (Ingrese cabeza o los 20)";
+            if (game.config.type === 'pick3') placeholder = "Ej: 8, 8, 2";
+            document.getElementById('modal-numbers').placeholder = placeholder;
+            
+            if(prefillDate) {
+                document.getElementById('modal-date').value = prefillDate;
+                // If editing, find data and fill input
+                const existing = game.data.find(d => d.date === prefillDate);
+                if (existing && existing.main && existing.main.length > 0) {
+                    document.getElementById('modal-numbers').value = existing.main.join(', ');
+                    if(existing.extra) document.getElementById('modal-extra').value = existing.extra;
+                } else {
+                    document.getElementById('modal-numbers').value = "";
+                    document.getElementById('modal-extra').value = "";
+                }
+            } else {
+                document.getElementById('modal-numbers').value = "";
+                document.getElementById('modal-extra').value = "";
+            }
+            
+            document.getElementById('modal-overlay').classList.remove('hidden');
+        }
+
+        function closeAddModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+            document.getElementById('add-draw-form').reset();
+        }
+
+        function handleManualSubmit(e) {
+            e.preventDefault();
+            const game = GAMES[currentGame];
+            
+            const dateStr = document.getElementById('modal-date').value;
+            const numsStr = document.getElementById('modal-numbers').value;
+            const extraStr = document.getElementById('modal-extra').value;
+
+            // Parse Main Numbers
+            let mainNums = numsStr.split(/[\s,]+/).map(n => parseInt(n)).filter(n => !isNaN(n));
+            
+            // Validation/Correction
+            if (game.config.type === 'quiniela') {
+                if(mainNums.length < 20 && mainNums.length > 0) {
+                    // Keep existing numbers if possible, fill rest
+                    const fillCount = 20 - mainNums.length;
+                    for(let i=0; i<fillCount; i++) mainNums.push(Math.floor(Math.random()*10000));
+                }
+            }
+
+            let extraNum = null;
+            if (game.config.hasExtra && extraStr) {
+                extraNum = parseInt(extraStr);
+            }
+
+            // Find if date exists and update it, else add new
+            const existingIdx = game.data.findIndex(d => d.date === dateStr);
+            if (existingIdx >= 0) {
+                game.data[existingIdx] = { date: dateStr, main: mainNums, extra: extraNum, pending: false };
+            } else {
+                game.data.unshift({ date: dateStr, main: mainNums, extra: extraNum, pending: false });
+            }
+
+            // Refresh
+            processStats(game);
+            renderStatsUI(game);
+            renderHistory(game, true);
+            renderChart(game);
+            
+            closeAddModal();
+        }
+
+        // --- SWITCH GAME ---
+        function switchGame(gameKey) {
+            currentGame = gameKey;
+            const game = GAMES[gameKey];
+
+            // UI Updates
+            document.getElementById('main-body').className = `min-h-screen flex flex-col ${game.bgClass}`;
+            document.getElementById('game-title').innerText = game.title;
+            document.getElementById('game-desc').innerText = game.desc;
+            document.getElementById('prediction-panel-border').style.borderColor = game.color;
+            
+            // Tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if(btn.dataset.game === gameKey) {
+                    btn.classList.add('active');
+                    btn.style.borderBottomColor = game.color;
+                    btn.style.color = 'white';
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.borderBottomColor = 'transparent';
+                    btn.style.color = 'rgba(255,255,255,0.7)';
+                }
+            });
+
+            const icons = { powerball: 'fa-dollar-sign', lucky: 'fa-clover', quini: 'fa-earth-americas', telekino: 'fa-ticket', pick3: 'fa-dice-three', mendoza: 'fa-wine-glass' };
+            document.getElementById('game-icon').innerHTML = `<i class="fa-solid ${icons[gameKey]}"></i>`;
+            
+            if (gameKey === 'mendoza') {
+                document.getElementById('stats-context').innerText = "Terminaciones (00-99)";
+            } else if (gameKey === 'pick3') {
+                document.getElementById('stats-context').innerText = "Dígitos (0-9)";
+            } else {
+                document.getElementById('stats-context').innerText = "General";
+            }
+
+            // Show/Hide Official Link
+            const linkBtn = document.getElementById('official-link-btn');
+            if (game.officialLink) {
+                linkBtn.classList.remove('hidden');
+                linkBtn.classList.add('flex');
+                linkBtn.href = game.officialLink;
+            } else {
+                linkBtn.classList.add('hidden');
+                linkBtn.classList.remove('flex');
+            }
+
+            document.getElementById('prediction-area').innerHTML = `<span class="text-white/40 italic text-sm">Presiona Calcular...</span>`;
+
+            processStats(game);
+            renderStatsUI(game);
+            renderHistory(game);
+            renderChart(game);
+        }
+
+        // --- CORE LOGIC: STATS ---
+        function processStats(game) {
+            gameStats = {};
+            const start = game.config.startAtZero ? 0 : 1;
+            
+            for (let i = start; i <= game.config.maxMain; i++) {
+                gameStats[i] = { id: i, count: 0, logScore: 0 };
+            }
+
+            // Real Data (Weighted heavier)
+            game.data.forEach(draw => {
+                if(draw.pending) return; // Skip pending
+                draw.main.forEach(num => {
+                    let val = (game.config.type === 'quiniela') ? num % 100 : num;
+                    if (gameStats[val]) gameStats[val].count += 5;
+                });
+            });
+
+            // Simulated History
+            for(let i=0; i<300; i++) {
+                const draw = generateSimulatedDraw(game);
+                draw.forEach(num => {
+                    let val = (game.config.type === 'quiniela') ? num % 100 : num;
+                    if (gameStats[val]) gameStats[val].count++;
+                });
+            }
+
+            Object.values(gameStats).forEach(stat => {
+                stat.logScore = Math.log10(stat.count + 1) * 10;
+            });
+        }
+
+        function generateSimulatedDraw(game) {
+            const min = game.config.startAtZero ? 0 : 1;
+            
+            if (game.config.type === 'quiniela') {
+                let draw = [];
+                for(let i=0; i<20; i++) draw.push(Math.floor(Math.random() * 10000));
+                return draw;
+            }
+
+            if (game.config.canRepeat) {
+                let draw = [];
+                for(let i=0; i < game.config.pickMain; i++) {
+                    draw.push(Math.floor(Math.random() * (game.config.maxMain - min + 1)) + min);
+                }
+                return draw;
+            } else {
+                let set = new Set();
+                while(set.size < game.config.pickMain) {
+                    set.add(Math.floor(Math.random() * (game.config.maxMain - min + 1)) + min);
+                }
+                return Array.from(set);
+            }
+        }
+
+        // --- PREDICTION ---
+        function calculatePrediction() {
+            const btn = document.getElementById('predict-btn');
+            const area = document.getElementById('prediction-area');
+            const game = GAMES[currentGame];
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            area.innerHTML = `<div class="flex flex-col items-center"><i class="fa-solid fa-circle-notch fa-spin text-2xl text-white/50 mb-2"></i><span class="text-xs">Procesando ${game.title}...</span></div>`;
+
+            setTimeout(() => {
+                let mainNums;
+                if (game.config.type === 'quiniela') {
+                     mainNums = [];
+                     const preferredEndings = getWeightedRandom(game, 20); 
+                     preferredEndings.forEach(ending => {
+                         const prefix = Math.floor(Math.random() * 100);
+                         mainNums.push((prefix * 100) + ending);
+                     });
+                } else {
+                     mainNums = getWeightedRandom(game, game.config.pickMain);
+                }
+
+                let extraNum = null;
+                if(game.config.hasExtra) {
+                    extraNum = Math.floor(Math.random() * game.config.maxExtra) + 1;
+                }
+
+                displayPrediction(mainNums, extraNum, game);
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }, 800);
+        }
+
+        function getWeightedRandom(game, count) {
+            let pool = [];
+            Object.values(gameStats).forEach(stat => {
+                let weight = Math.floor(Math.pow(stat.logScore, 2.5));
+                for(let i=0; i<weight; i++) pool.push(stat.id);
+            });
+
+            const min = game.config.startAtZero ? 0 : 1;
+            let result = [];
+
+            if (game.config.canRepeat || game.config.type === 'quiniela') {
+                for (let i = 0; i < count; i++) {
+                    let pick = pool[Math.floor(Math.random() * pool.length)];
+                    if(pick === undefined) pick = Math.floor(Math.random() * (game.config.maxMain - min + 1)) + min;
+                    result.push(pick);
+                }
+                return result; 
+            } else {
+                let set = new Set();
+                let safety = 0;
+                while(set.size < count && safety < 2000) {
+                    let pick = pool[Math.floor(Math.random() * pool.length)];
+                    if(pick !== undefined) set.add(pick);
+                    safety++;
+                }
+                while(set.size < count) {
+                     set.add(Math.floor(Math.random() * (game.config.maxMain - min + 1)) + min);
+                }
+                return Array.from(set).sort((a,b) => a - b);
+            }
+        }
+
+        function displayPrediction(main, extra, game) {
+            const area = document.getElementById('prediction-area');
+            area.innerHTML = '';
+            
+            let ballClass = '';
+            if (currentGame === 'powerball') ballClass = 'w-10 h-10 rounded-full pb-white text-lg';
+            if (currentGame === 'lucky') ballClass = 'w-10 h-10 rounded-full lucky-white text-lg';
+            if (currentGame === 'quini') ballClass = 'w-10 h-10 rounded-full q6-ball text-lg';
+            if (currentGame === 'telekino') ballClass = 'w-8 h-8 rounded-sm tk-ball text-sm';
+            if (currentGame === 'pick3') ballClass = 'w-12 h-12 rounded-xl p3-ball text-2xl';
+
+            if (currentGame === 'mendoza') {
+                area.className = "w-full p-2 bg-black/20 rounded-xl border border-white/5 overflow-hidden";
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-4 gap-2";
+                main.forEach((num, idx) => {
+                    let numStr = num.toString().padStart(4, '0');
+                    const cell = document.createElement('div');
+                    if (idx === 0) {
+                        cell.className = "col-span-4 mza-head p-2 text-center rounded text-2xl animate-pop mb-2 shadow-lg";
+                        cell.innerHTML = `<span class="text-xs uppercase block text-white/80 tracking-widest">A la Cabeza</span>${numStr}`;
+                    } else {
+                        cell.className = "mza-strip p-1 text-center rounded text-sm animate-pop font-bold";
+                        cell.innerText = `${idx+1}. ${numStr}`;
+                        cell.style.animationDelay = `${idx * 0.05}s`;
+                    }
+                    grid.appendChild(cell);
+                });
+                area.appendChild(grid);
+                return;
+            }
+
+            area.className = "flex flex-wrap justify-center gap-2 mb-6 min-h-[100px] items-center p-4 bg-black/20 rounded-xl border border-white/5";
+            main.forEach((num, idx) => {
+                const el = document.createElement('div');
+                el.className = `ball ${ballClass} animate-pop`;
+                el.style.animationDelay = `${idx * 0.1}s`;
+                let text = num;
+                if (currentGame !== 'telekino' && currentGame !== 'pick3' && num < 10) text = '0' + num;
+                el.innerText = text;
+                area.appendChild(el);
+            });
+
+            if(extra !== null) {
+                const ex = document.createElement('div');
+                if (currentGame === 'lucky') {
+                    ex.className = `ball w-10 h-10 rounded-full lucky-ball text-lg animate-pop ml-2`;
+                } else {
+                    ex.className = `ball w-10 h-10 rounded-full pb-red text-lg animate-pop ml-2`;
+                }
+                ex.style.animationDelay = '0.5s';
+                ex.innerText = extra;
+                area.appendChild(ex);
+            }
+        }
+
+        // --- RENDERERS ---
+        function renderStatsUI(game) {
+            const sorted = Object.values(gameStats).sort((a,b) => b.count - a.count);
+            const hotDiv = document.getElementById('hot-list');
+            const coldDiv = document.getElementById('cold-list');
+            
+            hotDiv.innerHTML = '';
+            coldDiv.innerHTML = '';
+
+            sorted.slice(0, 5).forEach(s => {
+                let idDisplay = s.id;
+                if (game.config.type === 'quiniela' && s.id < 10) idDisplay = '0' + s.id;
+                hotDiv.innerHTML += `<div class="flex justify-between bg-white/5 p-1 px-2 rounded"><span class="font-bold">${idDisplay}</span> <span class="opacity-50">${s.count}</span></div>`;
+            });
+            
+            sorted.slice(-5).reverse().forEach(s => {
+                let idDisplay = s.id;
+                if (game.config.type === 'quiniela' && s.id < 10) idDisplay = '0' + s.id;
+                coldDiv.innerHTML += `<div class="flex justify-between bg-white/5 p-1 px-2 rounded"><span class="font-bold">${idDisplay}</span> <span class="opacity-50">${s.count}</span></div>`;
+            });
+        }
+
+        function renderHistory(game, highlightFirst = false) {
+            const tbody = document.getElementById('history-table');
+            tbody.innerHTML = '';
+
+            game.data.forEach((d, index) => {
+                let resultHTML = '';
+                let actionBtn = '';
+
+                // Always allow editing
+                actionBtn = `<button onclick="openAddModal('${d.date}', true)" class="ml-2 text-slate-500 hover:text-white transition" title="Editar"><i class="fa-solid fa-pencil"></i></button>`;
+                
+                // Pending State override
+                if (d.pending) {
+                    resultHTML = `<button onclick="openAddModal('${d.date}', true)" class="text-xs bg-yellow-500/20 text-yellow-200 border border-yellow-500/50 px-3 py-1 rounded hover:bg-yellow-500/40 transition flex items-center gap-1"><i class="fa-solid fa-pen"></i> Cargar Resultados</button>`;
+                    actionBtn = ''; // Hide small pencil if large button exists
+                } else {
+                    if(currentGame === 'telekino') {
+                        resultHTML = `<div class="grid grid-cols-8 gap-1 gap-y-1 justify-end">${d.main.map(n => `<span class="text-[10px] bg-yellow-500/20 text-yellow-200 px-1 rounded text-center">${n}</span>`).join('')}</div>`;
+                    } 
+                    else if (currentGame === 'pick3') {
+                         resultHTML = `<div class="flex gap-2 justify-end">${d.main.map(n => `<span class="w-6 h-6 flex items-center justify-center bg-purple-500 rounded text-white font-bold text-xs shadow">${n}</span>`).join('')}</div>`;
+                    } 
+                    else if (currentGame === 'mendoza') {
+                         let cabeza = d.main[0].toString().padStart(4, '0');
+                         resultHTML = `<div class="flex flex-col items-end">
+                            <span class="text-lg font-bold text-rose-300 bg-rose-900/50 px-2 rounded border border-rose-500/50 mb-1">${cabeza}</span>
+                            <span class="text-[10px] text-white/50">y 19 más...</span>
+                         </div>`;
+                    }
+                    else {
+                        const nums = d.main.map(n => n < 10 ? '0'+n : n).join(' - ');
+                        let extra = '';
+                        if(d.extra) {
+                            let exClass = 'bg-red-500/80';
+                            if (currentGame === 'lucky') exClass = 'bg-green-600/80';
+                            extra = `<span class="ml-2 ${exClass} text-white px-1.5 rounded-full text-xs font-bold">${d.extra}</span>`;
+                        }
+                        resultHTML = `<span>${nums}</span> ${extra}`;
+                    }
+                }
+
+                const rowClass = (index === 0 && highlightFirst) ? 'new-draw-row bg-green-500/10' : 'hover:bg-white/5';
+
+                tbody.innerHTML += `
+                    <tr class="border-b border-white/5 transition ${rowClass}">
+                        <td class="px-4 py-2 font-mono text-xs opacity-70 whitespace-nowrap align-middle">
+                            ${d.date}
+                            ${actionBtn}
+                        </td>
+                        <td class="px-4 py-2 text-right font-bold text-white tracking-widest align-middle flex justify-end items-center">
+                            ${resultHTML}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderChart(game) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
+
+            let limit = 25; 
+            if (currentGame === 'pick3') limit = 10;
+            if (currentGame === 'mendoza') limit = 30;
+
+            const sorted = Object.values(gameStats).sort((a,b) => b.count - a.count).slice(0, limit);
+            
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(s => {
+                        if (currentGame === 'mendoza' && s.id < 10) return '0'+s.id;
+                        return s.id;
+                    }),
+                    datasets: [{
+                        label: 'Frecuencia',
+                        data: sorted.map(s => s.count),
+                        backgroundColor: game.color,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' } },
+                        x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.5)', font: {size: 10} } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
