@@ -2,831 +2,428 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LotoMaster Global: Powerball + Lucky for Life + Quini + Telekino + Pick 3 + Quiniela MZA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Roulette Master AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap');
-        
         body {
-            font-family: 'Inter', sans-serif;
             background-color: #0f172a;
             color: #e2e8f0;
-            transition: background-color 0.5s ease;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            touch-action: manipulation;
         }
-
-        /* Themes */
-        .theme-powerball { background: radial-gradient(circle at top, #1e293b, #0f172a); }
-        .theme-lucky { background: radial-gradient(circle at top, #166534, #052e16); }
-        .theme-quini { background: radial-gradient(circle at top, #0c4a6e, #082f49); }
-        .theme-telekino { background: radial-gradient(circle at top, #14532d, #052e16); }
-        .theme-pick3 { background: radial-gradient(circle at top, #581c87, #2e1065); }
-        .theme-mendoza { background: radial-gradient(circle at top, #881337, #4c0519); } 
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .ball {
-            box-shadow: inset -3px -3px 8px rgba(0,0,0,0.5), inset 3px 3px 8px rgba(255,255,255,0.3), 5px 5px 10px rgba(0,0,0,0.3);
+        
+        .num-btn {
+            aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'JetBrains Mono', monospace;
             font-weight: bold;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.5);
+            border: none;
+            transition: transform 0.05s;
         }
 
-        /* Powerball Specifics */
-        .pb-white { background: radial-gradient(circle at 30% 30%, #fff, #cbd5e1); color: #334155; }
-        .pb-red { background: radial-gradient(circle at 30% 30%, #ffadad, #dc2626); color: white; }
+        .num-btn:active { transform: scale(0.95); opacity: 0.9; }
 
-        /* Lucky For Life Specifics */
-        .lucky-white { background: radial-gradient(circle at 30% 30%, #fff, #cbd5e1); color: #14532d; }
-        .lucky-ball { background: radial-gradient(circle at 30% 30%, #86efac, #15803d); color: white; border: 1px solid #4ade80; text-shadow: 1px 1px 0 rgba(0,0,0,0.3); }
+        .bg-r-red { background: linear-gradient(145deg, #ef4444, #b91c1c); color: white; }
+        .bg-r-black { background: linear-gradient(145deg, #374151, #111827); color: white; border: 1px solid #4b5563; }
+        .bg-r-green { background: linear-gradient(145deg, #22c55e, #15803d); color: white; }
 
-        /* Quini Specifics */
-        .q6-ball { background: radial-gradient(circle at 30% 30%, #fff, #bae6fd, #0284c7); color: #082f49; border: 1px solid #7dd3fc; }
+        .stat-card {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #334155;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+        }
 
-        /* Telekino Specifics */
-        .tk-ball { background: radial-gradient(circle at 30% 30%, #fff, #fde047, #ca8a04); color: #422006; border: 1px solid #facc15; font-size: 0.8rem; }
+        .prediction-box {
+            background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+            border: 1px solid #4338ca;
+            position: relative;
+            overflow: hidden;
+        }
         
-        /* Pick 3 Specifics */
-        .p3-ball { background: radial-gradient(circle at 30% 30%, #f3e8ff, #a855f7, #6b21a8); color: white; border: 1px solid #d8b4fe; text-shadow: 1px 1px 0px rgba(0,0,0,0.5); }
-
-        /* Quiniela Mendoza Specifics */
-        .mza-strip { 
-            background: linear-gradient(to bottom, #fff, #e2e8f0); 
-            color: #881337; 
-            border: 1px solid #cbd5e1; 
-            font-family: 'JetBrains Mono', monospace;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .mza-head {
-            background: linear-gradient(to bottom, #fecdd3, #fb7185);
-            color: #881337;
-            border: 2px solid #be123c;
+        .prediction-number {
+            font-size: 2rem;
             font-weight: 800;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
 
-        @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            70% { transform: scale(1.2); }
-            100% { transform: scale(1); opacity: 1; }
+        .history-badge {
+            min-width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 6px;
+            border: 2px solid rgba(255,255,255,0.1);
         }
-        .animate-pop { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+        /* Suggestion Cards */
+        .sugg-card {
+            background: #334155;
+            border-left: 4px solid #facc15;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease-out;
+        }
+        .sugg-label { font-size: 0.8rem; text-transform: uppercase; color: #cbd5e1; font-weight: 600; }
+        .sugg-val { font-weight: bold; color: #facc15; }
+        .prob-high { border-color: #22c55e; } 
+        .prob-med { border-color: #facc15; }
+
+        @keyframes slideIn {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         
-        .new-draw-row { animation: flashNew 2s ease-out; }
-        @keyframes flashNew {
-            0% { background-color: rgba(255, 255, 255, 0.3); }
-            100% { background-color: transparent; }
-        }
-
-        .tab-btn.active {
-            background-color: rgba(255,255,255,0.15);
-            border-bottom: 3px solid currentColor;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); rounded: 3px; }
-
-        /* Modal Overlay */
-        #modal-overlay {
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col theme-powerball" id="main-body">
+<body class="h-screen flex flex-col overflow-hidden">
 
-    <!-- Navigation -->
-    <nav class="bg-black/30 backdrop-blur-md sticky top-0 z-50 border-b border-white/10">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-2xl" id="logo-icon"></i>
-                    <span class="font-bold text-xl tracking-tight hidden sm:block">Loto<span class="text-white/80">Master</span></span>
-                </div>
-                
-                <div class="flex items-center gap-3">
-                    <!-- Game Tabs Container -->
-                    <div class="flex gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide max-w-[280px] sm:max-w-none">
-                        <button onclick="switchGame('powerball')" class="tab-btn active px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="powerball" style="color: #ef4444;"><i class="fa-solid fa-flag-usa"></i></button>
-                        <button onclick="switchGame('lucky')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="lucky" style="color: #4ade80;"><i class="fa-solid fa-clover"></i></button>
-                        <button onclick="switchGame('quini')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="quini" style="color: #38bdf8;">Q6</button>
-                        <button onclick="switchGame('telekino')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="telekino" style="color: #facc15;">TK</button>
-                        <button onclick="switchGame('pick3')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="pick3" style="color: #a855f7;">P3</button>
-                        <button onclick="switchGame('mendoza')" class="tab-btn px-3 py-2 rounded-t-lg text-xs font-bold whitespace-nowrap" data-game="mendoza" style="color: #fb7185;">Mz</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-6 gap-6 flex flex-col lg:flex-row">
-        
-        <!-- Controls Column -->
-        <div class="lg:w-1/3 flex flex-col gap-6">
-            
-            <!-- Prediction Panel -->
-            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden border-t-4" id="prediction-panel-border">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-white" id="game-title">Powerball</h2>
-                        <p class="text-white/60 text-xs" id="game-desc">5 Números (1-69) + 1 Powerball (1-26)</p>
-                    </div>
-                    <div id="game-icon" class="text-3xl opacity-20"><i class="fa-solid fa-dollar-sign"></i></div>
-                </div>
-
-                <!-- Prediction Display Area -->
-                <div id="prediction-area" class="flex flex-wrap justify-center gap-2 mb-6 min-h-[100px] items-center p-4 bg-black/20 rounded-xl border border-white/5 overflow-y-auto max-h-[300px]">
-                    <span class="text-white/40 italic text-sm">Presiona Calcular...</span>
-                </div>
-
-                <button onclick="calculatePrediction()" id="predict-btn" class="w-full py-4 rounded-xl font-bold text-white shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    CALCULAR JUGADA
+    <!-- Header & Predictions -->
+    <div class="flex-none p-3 pb-0 bg-slate-900 z-10 shadow-xl">
+        <div class="flex justify-between items-center mb-2">
+            <h1 class="text-sm font-bold text-indigo-400 uppercase tracking-wider"><i class="fas fa-brain mr-1"></i>IA Master</h1>
+            <div class="flex gap-2">
+                <button onclick="undoLast()" class="px-3 py-1 bg-slate-700 rounded text-xs hover:bg-slate-600">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button onclick="confirmReset()" class="px-3 py-1 bg-red-900/40 text-red-300 rounded text-xs hover:bg-red-900/60">
+                    <i class="fas fa-trash"></i>
                 </button>
             </div>
-
-            <!-- Stats Panel -->
-            <div class="glass-panel rounded-2xl p-6">
-                <h3 class="font-bold text-sm uppercase tracking-wider text-white/80 mb-4 border-b border-white/10 pb-2 flex justify-between">
-                    <span><i class="fa-solid fa-chart-line mr-2"></i>Tendencias</span>
-                    <span id="stats-context" class="text-[10px] bg-white/10 px-2 rounded flex items-center">General</span>
-                </h3>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <h4 class="text-xs text-green-400 mb-2 font-bold">🔥 CALIENTES</h4>
-                        <div id="hot-list" class="space-y-2 text-sm"></div>
-                    </div>
-                    <div>
-                        <h4 class="text-xs text-blue-400 mb-2 font-bold">❄️ FRÍOS</h4>
-                        <div id="cold-list" class="space-y-2 text-sm"></div>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <!-- Data Column -->
-        <div class="lg:w-2/3 flex flex-col gap-6">
+        <!-- MAIN PREDICTION AREA (NUMBERS) -->
+        <div id="predictionArea" class="hidden grid-cols-3 gap-2 mb-3">
+            <div class="stat-card prediction-box flex flex-col items-center justify-center p-2 text-center">
+                <div class="text-[10px] uppercase text-red-300 font-bold mb-1 tracking-wider">Tendencia 🔥</div>
+                <div id="predHot" class="prediction-number text-red-400">-</div>
+            </div>
             
-            <!-- Chart -->
-            <div class="glass-panel rounded-2xl p-6 min-h-[300px]">
-                <h3 class="font-bold text-lg mb-4">Frecuencia Histórica</h3>
-                <div class="relative h-56 w-full">
-                    <canvas id="mainChart"></canvas>
-                </div>
+            <div class="stat-card prediction-box flex flex-col items-center justify-center p-2 text-center border-indigo-500 shadow-indigo-500/20 shadow-lg transform scale-105 z-10">
+                <div class="text-[10px] uppercase text-indigo-300 font-bold mb-1 tracking-wider">Probable 🎯</div>
+                <div id="predSmart" class="prediction-number text-white animate-pulse-slow">-</div>
             </div>
 
-            <!-- History Table -->
-            <div class="glass-panel rounded-2xl p-6 flex-grow flex flex-col">
-                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-bold text-lg">Historial Oficial</h3>
-                    </div>
-                    
-                    <div class="flex gap-2">
-                        <!-- External Link Button -->
-                        <a id="official-link-btn" href="#" target="_blank" class="hidden bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-2 rounded-lg transition border border-blue-400/50 items-center gap-2 shadow-lg active:scale-95">
-                            <i class="fa-solid fa-globe"></i> Ver Oficial
-                        </a>
-                        
-                        <!-- Manual Load Button -->
-                        <button onclick="openAddModal()" class="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-2 rounded-lg transition border border-green-400/50 flex items-center gap-2 shadow-lg active:scale-95">
-                            <i class="fa-solid fa-plus"></i> Cargar Sorteo
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="overflow-x-auto flex-grow">
-                    <table class="w-full text-sm text-left text-white/80">
-                        <thead class="text-xs uppercase bg-black/20 text-white/60">
-                            <tr>
-                                <th class="px-4 py-3 rounded-l-lg w-36">Fecha</th>
-                                <th class="px-4 py-3 text-right rounded-r-lg">Resultados</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table">
-                            <!-- JS Injected -->
-                        </tbody>
-                    </table>
-                </div>
+            <div class="stat-card prediction-box flex flex-col items-center justify-center p-2 text-center">
+                <div class="text-[10px] uppercase text-cyan-300 font-bold mb-1 tracking-wider">Atrasado ❄️</div>
+                <div id="predCold" class="prediction-number text-cyan-400">-</div>
             </div>
         </div>
-    </main>
+        
+        <div id="startMsg" class="text-center py-6 text-slate-500 text-sm bg-slate-800/50 rounded-lg mb-3 border border-slate-700 border-dashed">
+            Ingresa al menos 5 números para activar la IA
+        </div>
 
-    <!-- MODAL FOR MANUAL ENTRY (ADMIN) -->
-    <div id="modal-overlay" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-800 rounded-2xl border border-white/10 shadow-2xl max-w-md w-full p-6 transform transition-all">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-white">Editar Resultados</h3>
-                <button onclick="closeAddModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            
-            <form id="add-draw-form" onsubmit="handleManualSubmit(event)">
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Juego</label>
-                    <input type="text" id="modal-game-name" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white" disabled>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Fecha (ID)</label>
-                    <input type="text" id="modal-date" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white font-mono" required>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2" id="modal-numbers-label">Números</label>
-                    <input type="text" id="modal-numbers" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white font-mono" required>
-                    <p class="text-[10px] text-slate-500 mt-1" id="modal-hint">Separados por coma o espacio.</p>
-                </div>
-
-                <div class="mb-6" id="modal-extra-container">
-                    <label class="block text-xs font-bold text-red-400 uppercase mb-2" id="modal-extra-label">Bola Extra</label>
-                    <input type="number" id="modal-extra" class="w-24 bg-slate-900 border border-red-900/50 rounded p-2 text-white font-mono">
-                </div>
-
-                <div class="flex gap-3">
-                    <button type="button" onclick="closeAddModal()" class="flex-1 py-3 rounded-xl font-bold text-slate-300 hover:bg-slate-700 transition">Cancelar</button>
-                    <button type="submit" class="flex-1 py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-500 transition shadow-lg">Guardar</button>
-                </div>
-            </form>
+        <!-- History Strip -->
+        <div class="relative border-t border-slate-800 pt-2">
+            <div id="historyList" class="flex overflow-x-auto py-1 items-center h-12 scrollbar-hide"></div>
+            <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-900 to-transparent pointer-events-none"></div>
         </div>
     </div>
 
-    <footer class="text-center py-6 text-white/40 text-xs">
-        <p>⚠️ Aplicación de simulación estadística. Juega responsablemente.</p>
-    </footer>
+    <!-- Main Content Area (Scrollable) -->
+    <div class="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-950">
+        
+        <!-- STRATEGY SUGGESTIONS (New Section) -->
+        <div id="strategySection" class="hidden">
+            <h3 class="text-xs text-slate-400 uppercase font-bold mb-2 tracking-widest pl-1">Oportunidades Detectadas</h3>
+            <div id="suggestionList" class="flex flex-col">
+                <!-- JS will insert cards here -->
+            </div>
+            <div id="noSuggestions" class="text-xs text-slate-600 italic text-center py-2">Mesa equilibrada, esperando desvíos...</div>
+        </div>
+
+        <!-- Quick Stats Bars -->
+        <div id="statsRow" class="hidden grid-cols-2 gap-3">
+            <div class="stat-card p-2">
+                <div class="flex justify-between text-xs text-slate-400 mb-1"><span>Rojo</span><span id="txtRed">0%</span></div>
+                <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden"><div id="barRed" class="h-full bg-red-500 transition-all duration-500" style="width:0%"></div></div>
+            </div>
+            <div class="stat-card p-2">
+                <div class="flex justify-between text-xs text-slate-400 mb-1"><span>Negro</span><span id="txtBlack">0%</span></div>
+                <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden"><div id="barBlack" class="h-full bg-slate-400 transition-all duration-500" style="width:0%"></div></div>
+            </div>
+        </div>
+
+        <!-- Numbers Grid Input -->
+        <div class="pb-10">
+            <div class="flex justify-between items-end mb-2 mt-4">
+                <h2 class="text-xs text-slate-500 uppercase font-bold tracking-widest">Entrada de Datos</h2>
+                <span class="text-[10px] text-slate-600" id="totalSpins">Tiros: 0</span>
+            </div>
+            
+            <div class="grid grid-cols-1 mb-1">
+                <button onclick="addNumber(0)" class="num-btn bg-r-green h-8 shadow-lg shadow-green-900/20 !aspect-auto w-full">0</button>
+            </div>
+            <div id="numbersGrid" class="grid grid-cols-9 gap-1"></div>
+        </div>
+    </div>
+
+    <!-- Reset Modal -->
+    <div id="resetModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 p-6 rounded-xl max-w-sm w-full border border-slate-700 shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-2">¿Nueva sesión?</h3>
+            <p class="text-slate-400 mb-6 text-sm">Se borrarán los patrones detectados.</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-lg bg-slate-700 text-white font-medium">Cancelar</button>
+                <button onclick="fullReset()" class="px-4 py-2 rounded-lg bg-red-600 text-white font-bold shadow-lg shadow-red-900/30">Reiniciar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // --- GLOBAL CONFIGURATION ---
-        let currentGame = 'powerball';
-        let chartInstance = null;
+        // --- Data & Config ---
+        const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+        const COL_1 = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34];
+        const COL_2 = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35];
+        const COL_3 = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36];
 
-        // --- HELPER: GENERATE BOARD (MENDOZA) ---
-        function generateMendozaBoard(cabeza, isPending = false) {
-            if (isPending) return [];
-            let board = [];
-            let firstNum;
-            if (cabeza !== undefined) {
-                if (cabeza < 100) {
-                    let prefix = Math.floor(Math.random() * 100); 
-                    firstNum = (prefix * 100) + cabeza;
-                } else {
-                    firstNum = cabeza;
-                }
-            } else {
-                firstNum = Math.floor(Math.random() * 10000);
-            }
-            board.push(firstNum);
-            for(let i=0; i<19; i++) board.push(Math.floor(Math.random() * 10000));
-            return board;
-        }
+        const WHEEL_ORDER = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
-        // --- GAME DEFINITIONS (ACTUALIZADO 21 DIC 2025) ---
-        const GAMES = {
-            powerball: {
-                title: "Powerball US",
-                desc: "5 Blancas (1-69) + 1 Roja (1-26)",
-                color: "#ef4444", 
-                bgClass: "theme-powerball",
-                config: { maxMain: 69, pickMain: 5, hasExtra: true, maxExtra: 26, startAtZero: false, canRepeat: false, type: 'standard' },
-                data: [
-                    { date: '20-12-25', main: [4, 5, 28, 52, 69], extra: 20 }, 
-                    { date: '17-12-25', main: [25, 33, 53, 62, 66], extra: 17 },
-                    { date: '15-12-25', main: [23, 35, 59, 63, 68], extra: 2 },
-                    { date: '13-12-25', main: [1, 28, 31, 57, 58], extra: 16 },
-                    { date: '10-12-25', main: [10, 16, 29, 33, 69], extra: 22 },
-                    { date: '08-12-25', main: [8, 32, 52, 56, 64], extra: 23 }
-                ]
-            },
-            lucky: {
-                title: "Lucky For Life",
-                desc: "5 Blancas (1-48) + 1 Lucky Ball (1-18)",
-                color: "#4ade80", 
-                bgClass: "theme-lucky",
-                config: { maxMain: 48, pickMain: 5, hasExtra: true, maxExtra: 18, startAtZero: false, canRepeat: false, type: 'standard' },
-                data: [
-                    { date: '20-12-25', main: [8, 21, 30, 41, 47], extra: 15 }, 
-                    { date: '19-12-25', main: [8, 13, 19, 34, 48], extra: 14 },
-                    { date: '18-12-25', main: [2, 9, 24, 25, 44], extra: 15 },
-                    { date: '17-12-25', main: [11, 13, 20, 40, 41], extra: 7 },
-                    { date: '16-12-25', main: [3, 4, 19, 24, 39], extra: 11 },
-                    { date: '15-12-25', main: [12, 16, 27, 34, 41], extra: 12 },
-                    { date: '14-12-25', main: [8, 23, 32, 33, 34], extra: 15 },
-                    { date: '13-12-25', main: [12, 18, 19, 24, 35], extra: 17 }
-                ]
-            },
-            quini: {
-                title: "Quini 6 Argentina",
-                desc: "6 Números (00-45) - Tradicional",
-                color: "#38bdf8", 
-                bgClass: "theme-quini",
-                config: { maxMain: 45, pickMain: 6, hasExtra: false, startAtZero: true, canRepeat: false, type: 'standard' },
-                data: [
-                    { date: '17-12-25', main: [02, 17, 24, 33, 39, 41] },
-                    { date: '14-12-25', main: [05, 09, 14, 28, 37, 44] },
-                    { date: '10-12-25', main: [00, 11, 21, 23, 36, 42] },
-                    { date: '07-12-25', main: [06, 17, 25, 30, 32, 45] },
-                    { date: '03-12-25', main: [03, 12, 19, 24, 37, 40] }
-                ]
-            },
-            telekino: {
-                title: "Telekino",
-                desc: "15 Números (1-25)",
-                color: "#facc15", 
-                bgClass: "theme-telekino",
-                config: { maxMain: 25, pickMain: 15, hasExtra: false, startAtZero: false, canRepeat: false, type: 'standard' },
-                data: [
-                    { date: '14-12-25', main: [1,2,4,6,8,10,12,13,15,16,19,21,22,24,25] },
-                    { date: '07-12-25', main: [2,3,5,7,9,11,12,14,15,17,18,20,22,23,25] },
-                    { date: '30-11-25', main: [1,3,4,6,8,9,11,13,16,18,19,20,21,23,24] }
-                ]
-            },
-            pick3: {
-                title: "Pick 3 (USA)",
-                desc: "3 Dígitos (0-9) - Midday & Evening",
-                color: "#a855f7", 
-                bgClass: "theme-pick3",
-                config: { maxMain: 9, pickMain: 3, hasExtra: false, startAtZero: true, canRepeat: true, type: 'pick3' },
-                data: [
-                    { date: '20-12-25 (Evening)', main: [9, 4, 0] },
-                    { date: '20-12-25 (Midday)', main: [8, 0, 3] },
-                    { date: '19-12-25 (Evening)', main: [1, 9, 5] },
-                    { date: '19-12-25 (Midday)', main: [3, 3, 0] },
-                    { date: '18-12-25 (Evening)', main: [9, 3, 7] },
-                    { date: '18-12-25 (Midday)', main: [3, 1, 0] },
-                    { date: '17-12-25 (Evening)', main: [7, 4, 7] },
-                    { date: '17-12-25 (Midday)', main: [4, 9, 1] },
-                    { date: '16-12-25 (Evening)', main: [8, 2, 4] },
-                    { date: '16-12-25 (Midday)', main: [8, 6, 0] }
-                ],
-                bias: [9, 3, 0, 7]
-            },
-            mendoza: {
-                title: "Quiniela Mendoza (Noct)",
-                desc: "20 Premios (4 Cifras)",
-                color: "#fb7185", 
-                bgClass: "theme-mendoza",
-                officialLink: "https://www.tujugada.com.ar/quiniela_mendoza.asp",
-                config: { maxMain: 99, pickMain: 20, hasExtra: false, startAtZero: true, canRepeat: true, type: 'quiniela' }, 
-                data: [
-                    // PENDIENTES: Usuario debe cargar desde la web
-                    { date: '20-12-25', main: [], pending: true }, 
-                    { date: '19-12-25', main: [], pending: true },
-                    // CONFIRMADO: 18-12
-                    { date: '18-12-25', main: generateMendozaBoard(8870) }, 
-                    { date: '17-12-25', main: generateMendozaBoard(4967) }, 
-                    { date: '16-12-25', main: generateMendozaBoard(2221) }
-                ]
-            }
+        let history = [];
+        
+        window.onload = function() {
+            renderGrid();
+            loadState();
         };
 
-        // --- STATE MANAGEMENT ---
-        let gameStats = {}; 
-
-        // --- INIT ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const today = new Date();
-            const d = String(today.getDate()).padStart(2, '0');
-            const m = String(today.getMonth() + 1).padStart(2, '0');
-            const y = String(today.getFullYear()).slice(-2);
-            document.getElementById('modal-date').value = `${d}-${m}-${y}`;
-
-            switchGame('powerball'); 
-        });
-
-        // --- MODAL LOGIC (ADMIN) ---
-        function openAddModal(prefillDate = null, isEdit = false) {
-            const game = GAMES[currentGame];
-            document.getElementById('modal-game-name').value = game.title;
-            document.getElementById('modal-extra-container').style.display = game.config.hasExtra ? 'block' : 'none';
-            document.getElementById('modal-extra-label').innerText = game.config.hasExtra ? (currentGame === 'lucky' ? 'Lucky Ball' : 'Bola Extra') : 'Extra';
-            
-            let placeholder = "Ej: 05, 12, 33...";
-            if (game.config.type === 'quiniela') placeholder = "Ej: 8870, 1234... (Ingrese cabeza o los 20)";
-            if (game.config.type === 'pick3') placeholder = "Ej: 8, 8, 2";
-            document.getElementById('modal-numbers').placeholder = placeholder;
-            
-            if(prefillDate) {
-                document.getElementById('modal-date').value = prefillDate;
-                // If editing, find data and fill input
-                const existing = game.data.find(d => d.date === prefillDate);
-                if (existing && existing.main && existing.main.length > 0) {
-                    document.getElementById('modal-numbers').value = existing.main.join(', ');
-                    if(existing.extra) document.getElementById('modal-extra').value = existing.extra;
-                } else {
-                    document.getElementById('modal-numbers').value = "";
-                    document.getElementById('modal-extra').value = "";
-                }
-            } else {
-                document.getElementById('modal-numbers').value = "";
-                document.getElementById('modal-extra').value = "";
-            }
-            
-            document.getElementById('modal-overlay').classList.remove('hidden');
-        }
-
-        function closeAddModal() {
-            document.getElementById('modal-overlay').classList.add('hidden');
-            document.getElementById('add-draw-form').reset();
-        }
-
-        function handleManualSubmit(e) {
-            e.preventDefault();
-            const game = GAMES[currentGame];
-            
-            const dateStr = document.getElementById('modal-date').value;
-            const numsStr = document.getElementById('modal-numbers').value;
-            const extraStr = document.getElementById('modal-extra').value;
-
-            // Parse Main Numbers
-            let mainNums = numsStr.split(/[\s,]+/).map(n => parseInt(n)).filter(n => !isNaN(n));
-            
-            // Validation/Correction
-            if (game.config.type === 'quiniela') {
-                if(mainNums.length < 20 && mainNums.length > 0) {
-                    // Keep existing numbers if possible, fill rest
-                    const fillCount = 20 - mainNums.length;
-                    for(let i=0; i<fillCount; i++) mainNums.push(Math.floor(Math.random()*10000));
-                }
-            }
-
-            let extraNum = null;
-            if (game.config.hasExtra && extraStr) {
-                extraNum = parseInt(extraStr);
-            }
-
-            // Find if date exists and update it, else add new
-            const existingIdx = game.data.findIndex(d => d.date === dateStr);
-            if (existingIdx >= 0) {
-                game.data[existingIdx] = { date: dateStr, main: mainNums, extra: extraNum, pending: false };
-            } else {
-                game.data.unshift({ date: dateStr, main: mainNums, extra: extraNum, pending: false });
-            }
-
-            // Refresh
-            processStats(game);
-            renderStatsUI(game);
-            renderHistory(game, true);
-            renderChart(game);
-            
-            closeAddModal();
-        }
-
-        // --- SWITCH GAME ---
-        function switchGame(gameKey) {
-            currentGame = gameKey;
-            const game = GAMES[gameKey];
-
-            // UI Updates
-            document.getElementById('main-body').className = `min-h-screen flex flex-col ${game.bgClass}`;
-            document.getElementById('game-title').innerText = game.title;
-            document.getElementById('game-desc').innerText = game.desc;
-            document.getElementById('prediction-panel-border').style.borderColor = game.color;
-            
-            // Tabs
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                if(btn.dataset.game === gameKey) {
-                    btn.classList.add('active');
-                    btn.style.borderBottomColor = game.color;
-                    btn.style.color = 'white';
-                } else {
-                    btn.classList.remove('active');
-                    btn.style.borderBottomColor = 'transparent';
-                    btn.style.color = 'rgba(255,255,255,0.7)';
-                }
-            });
-
-            const icons = { powerball: 'fa-dollar-sign', lucky: 'fa-clover', quini: 'fa-earth-americas', telekino: 'fa-ticket', pick3: 'fa-dice-three', mendoza: 'fa-wine-glass' };
-            document.getElementById('game-icon').innerHTML = `<i class="fa-solid ${icons[gameKey]}"></i>`;
-            
-            if (gameKey === 'mendoza') {
-                document.getElementById('stats-context').innerText = "Terminaciones (00-99)";
-            } else if (gameKey === 'pick3') {
-                document.getElementById('stats-context').innerText = "Dígitos (0-9)";
-            } else {
-                document.getElementById('stats-context').innerText = "General";
-            }
-
-            // Show/Hide Official Link
-            const linkBtn = document.getElementById('official-link-btn');
-            if (game.officialLink) {
-                linkBtn.classList.remove('hidden');
-                linkBtn.classList.add('flex');
-                linkBtn.href = game.officialLink;
-            } else {
-                linkBtn.classList.add('hidden');
-                linkBtn.classList.remove('flex');
-            }
-
-            document.getElementById('prediction-area').innerHTML = `<span class="text-white/40 italic text-sm">Presiona Calcular...</span>`;
-
-            processStats(game);
-            renderStatsUI(game);
-            renderHistory(game);
-            renderChart(game);
-        }
-
-        // --- CORE LOGIC: STATS ---
-        function processStats(game) {
-            gameStats = {};
-            const start = game.config.startAtZero ? 0 : 1;
-            
-            for (let i = start; i <= game.config.maxMain; i++) {
-                gameStats[i] = { id: i, count: 0, logScore: 0 };
-            }
-
-            // Real Data (Weighted heavier)
-            game.data.forEach(draw => {
-                if(draw.pending) return; // Skip pending
-                draw.main.forEach(num => {
-                    let val = (game.config.type === 'quiniela') ? num % 100 : num;
-                    if (gameStats[val]) gameStats[val].count += 5;
-                });
-            });
-
-            // Simulated History
-            for(let i=0; i<300; i++) {
-                const draw = generateSimulatedDraw(game);
-                draw.forEach(num => {
-                    let val = (game.config.type === 'quiniela') ? num % 100 : num;
-                    if (gameStats[val]) gameStats[val].count++;
-                });
-            }
-
-            Object.values(gameStats).forEach(stat => {
-                stat.logScore = Math.log10(stat.count + 1) * 10;
-            });
-        }
-
-        function generateSimulatedDraw(game) {
-            const min = game.config.startAtZero ? 0 : 1;
-            
-            if (game.config.type === 'quiniela') {
-                let draw = [];
-                for(let i=0; i<20; i++) draw.push(Math.floor(Math.random() * 10000));
-                return draw;
-            }
-
-            if (game.config.canRepeat) {
-                let draw = [];
-                for(let i=0; i < game.config.pickMain; i++) {
-                    draw.push(Math.floor(Math.random() * (game.config.maxMain - min + 1)) + min);
-                }
-                return draw;
-            } else {
-                let set = new Set();
-                while(set.size < game.config.pickMain) {
-                    set.add(Math.floor(Math.random() * (game.config.maxMain - min + 1)) + min);
-                }
-                return Array.from(set);
+        function renderGrid() {
+            const grid = document.getElementById('numbersGrid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 36; i++) {
+                const btn = document.createElement('button');
+                const isRed = RED_NUMBERS.includes(i);
+                btn.className = `num-btn ${isRed ? 'bg-r-red' : 'bg-r-black'}`;
+                btn.innerText = i;
+                btn.onclick = () => addNumber(i);
+                grid.appendChild(btn);
             }
         }
 
-        // --- PREDICTION ---
-        function calculatePrediction() {
-            const btn = document.getElementById('predict-btn');
-            const area = document.getElementById('prediction-area');
-            const game = GAMES[currentGame];
-
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-            area.innerHTML = `<div class="flex flex-col items-center"><i class="fa-solid fa-circle-notch fa-spin text-2xl text-white/50 mb-2"></i><span class="text-xs">Procesando ${game.title}...</span></div>`;
-
-            setTimeout(() => {
-                let mainNums;
-                if (game.config.type === 'quiniela') {
-                     mainNums = [];
-                     const preferredEndings = getWeightedRandom(game, 20); 
-                     preferredEndings.forEach(ending => {
-                         const prefix = Math.floor(Math.random() * 100);
-                         mainNums.push((prefix * 100) + ending);
-                     });
-                } else {
-                     mainNums = getWeightedRandom(game, game.config.pickMain);
-                }
-
-                let extraNum = null;
-                if(game.config.hasExtra) {
-                    extraNum = Math.floor(Math.random() * game.config.maxExtra) + 1;
-                }
-
-                displayPrediction(mainNums, extraNum, game);
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }, 800);
+        function addNumber(num) {
+            history.unshift(num); 
+            saveState();
+            updateUI();
         }
 
-        function getWeightedRandom(game, count) {
-            let pool = [];
-            Object.values(gameStats).forEach(stat => {
-                let weight = Math.floor(Math.pow(stat.logScore, 2.5));
-                for(let i=0; i<weight; i++) pool.push(stat.id);
-            });
-
-            const min = game.config.startAtZero ? 0 : 1;
-            let result = [];
-
-            if (game.config.canRepeat || game.config.type === 'quiniela') {
-                for (let i = 0; i < count; i++) {
-                    let pick = pool[Math.floor(Math.random() * pool.length)];
-                    if(pick === undefined) pick = Math.floor(Math.random() * (game.config.maxMain - min + 1)) + min;
-                    result.push(pick);
-                }
-                return result; 
-            } else {
-                let set = new Set();
-                let safety = 0;
-                while(set.size < count && safety < 2000) {
-                    let pick = pool[Math.floor(Math.random() * pool.length)];
-                    if(pick !== undefined) set.add(pick);
-                    safety++;
-                }
-                while(set.size < count) {
-                     set.add(Math.floor(Math.random() * (game.config.maxMain - min + 1)) + min);
-                }
-                return Array.from(set).sort((a,b) => a - b);
-            }
+        function undoLast() {
+            if (history.length > 0) { history.shift(); saveState(); updateUI(); }
         }
 
-        function displayPrediction(main, extra, game) {
-            const area = document.getElementById('prediction-area');
-            area.innerHTML = '';
-            
-            let ballClass = '';
-            if (currentGame === 'powerball') ballClass = 'w-10 h-10 rounded-full pb-white text-lg';
-            if (currentGame === 'lucky') ballClass = 'w-10 h-10 rounded-full lucky-white text-lg';
-            if (currentGame === 'quini') ballClass = 'w-10 h-10 rounded-full q6-ball text-lg';
-            if (currentGame === 'telekino') ballClass = 'w-8 h-8 rounded-sm tk-ball text-sm';
-            if (currentGame === 'pick3') ballClass = 'w-12 h-12 rounded-xl p3-ball text-2xl';
+        function confirmReset() { document.getElementById('resetModal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('resetModal').classList.add('hidden'); }
+        function fullReset() { history = []; saveState(); updateUI(); closeModal(); }
 
-            if (currentGame === 'mendoza') {
-                area.className = "w-full p-2 bg-black/20 rounded-xl border border-white/5 overflow-hidden";
-                const grid = document.createElement('div');
-                grid.className = "grid grid-cols-4 gap-2";
-                main.forEach((num, idx) => {
-                    let numStr = num.toString().padStart(4, '0');
-                    const cell = document.createElement('div');
-                    if (idx === 0) {
-                        cell.className = "col-span-4 mza-head p-2 text-center rounded text-2xl animate-pop mb-2 shadow-lg";
-                        cell.innerHTML = `<span class="text-xs uppercase block text-white/80 tracking-widest">A la Cabeza</span>${numStr}`;
-                    } else {
-                        cell.className = "mza-strip p-1 text-center rounded text-sm animate-pop font-bold";
-                        cell.innerText = `${idx+1}. ${numStr}`;
-                        cell.style.animationDelay = `${idx * 0.05}s`;
-                    }
-                    grid.appendChild(cell);
-                });
-                area.appendChild(grid);
+        function getColorClass(num) {
+            if (num === 0) return 'bg-r-green';
+            return RED_NUMBERS.includes(num) ? 'bg-r-red' : 'bg-r-black';
+        }
+
+        function updateUI() {
+            renderHistory();
+            document.getElementById('totalSpins').innerText = `Tiros: ${history.length}`;
+
+            if (history.length < 5) {
+                document.getElementById('predictionArea').classList.remove('grid');
+                document.getElementById('predictionArea').classList.add('hidden');
+                document.getElementById('startMsg').classList.remove('hidden');
+                document.getElementById('strategySection').classList.add('hidden');
+                document.getElementById('statsRow').classList.add('hidden');
                 return;
             }
 
-            area.className = "flex flex-wrap justify-center gap-2 mb-6 min-h-[100px] items-center p-4 bg-black/20 rounded-xl border border-white/5";
-            main.forEach((num, idx) => {
-                const el = document.createElement('div');
-                el.className = `ball ${ballClass} animate-pop`;
-                el.style.animationDelay = `${idx * 0.1}s`;
-                let text = num;
-                if (currentGame !== 'telekino' && currentGame !== 'pick3' && num < 10) text = '0' + num;
-                el.innerText = text;
-                area.appendChild(el);
+            document.getElementById('startMsg').classList.add('hidden');
+            document.getElementById('predictionArea').classList.remove('hidden');
+            document.getElementById('predictionArea').classList.add('grid');
+            document.getElementById('strategySection').classList.remove('hidden');
+            document.getElementById('statsRow').classList.remove('hidden');
+            document.getElementById('statsRow').classList.add('grid');
+
+            calculatePredictions();
+            analyzeStrategy();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            history.forEach(num => {
+                const badge = document.createElement('div');
+                badge.className = `history-badge ${getColorClass(num)} flex-none`;
+                badge.innerText = num;
+                list.appendChild(badge);
+            });
+        }
+
+        function calculatePredictions() {
+            let counts = Array(37).fill(0);
+            let lastSeen = Array(37).fill(-1);
+            let reds = 0, blacks = 0;
+
+            history.forEach((num, idx) => {
+                counts[num]++;
+                if (lastSeen[num] === -1) lastSeen[num] = idx;
+                if (num !== 0) { if (RED_NUMBERS.includes(num)) reds++; else blacks++; }
             });
 
-            if(extra !== null) {
-                const ex = document.createElement('div');
-                if (currentGame === 'lucky') {
-                    ex.className = `ball w-10 h-10 rounded-full lucky-ball text-lg animate-pop ml-2`;
-                } else {
-                    ex.className = `ball w-10 h-10 rounded-full pb-red text-lg animate-pop ml-2`;
+            // Stats Colors
+            const totalColors = reds + blacks;
+            const pRed = totalColors ? Math.round((reds/totalColors)*100) : 0;
+            const pBlack = totalColors ? 100 - pRed : 0;
+            document.getElementById('barRed').style.width = `${pRed}%`;
+            document.getElementById('txtRed').innerText = `${pRed}%`;
+            document.getElementById('barBlack').style.width = `${pBlack}%`;
+            document.getElementById('txtBlack').innerText = `${pBlack}%`;
+
+            // Predictions (Hot/Cold/Smart)
+            let hotNum = 0, maxCount = -1;
+            for(let i=0; i<=36; i++) { if(counts[i] > maxCount) { maxCount = counts[i]; hotNum = i; } }
+            
+            let coldNum = 0, maxGap = -1;
+            for(let i=0; i<=36; i++) {
+                let gap = lastSeen[i] === -1 ? history.length : lastSeen[i];
+                if(gap > maxGap) { maxGap = gap; coldNum = i; }
+            }
+
+            // Smart Mix (Neighbor logic)
+            const lastNum = history[0];
+            const lastIdxWheel = WHEEL_ORDER.indexOf(lastNum);
+            let neighbors = [];
+            for(let off=-2; off<=2; off++) {
+                if(off===0) continue;
+                neighbors.push(WHEEL_ORDER[(lastIdxWheel + off + 37) % 37]);
+            }
+            let smartNum = neighbors[0], smartGap = -1;
+            neighbors.forEach(n => {
+                let g = lastSeen[n] === -1 ? history.length : lastSeen[n];
+                if (g > smartGap) { smartGap = g; smartNum = n; }
+            });
+            if (history.length < 10) smartNum = neighbors[Math.floor(Math.random()*neighbors.length)];
+
+            updatePredictionBox('predHot', hotNum);
+            updatePredictionBox('predCold', coldNum);
+            updatePredictionBox('predSmart', smartNum);
+        }
+
+        function analyzeStrategy() {
+            const suggestions = [];
+            
+            // --- GAPS CALCULATION ---
+            const gaps = {
+                red: 0, black: 0,
+                even: 0, odd: 0,
+                doz1: 0, doz2: 0, doz3: 0,
+                col1: 0, col2: 0, col3: 0
+            };
+
+            // Calculate gaps (how many spins since X happened)
+            function getGap(checkFn) {
+                for(let i=0; i<history.length; i++) {
+                    if (history[i] === 0) continue; // Skip 0 for outside bets usually
+                    if (checkFn(history[i])) return i;
                 }
-                ex.style.animationDelay = '0.5s';
-                ex.innerText = extra;
-                area.appendChild(ex);
+                return history.length;
+            }
+
+            // Colors
+            gaps.red = getGap(n => RED_NUMBERS.includes(n));
+            gaps.black = getGap(n => !RED_NUMBERS.includes(n));
+
+            // Parity
+            gaps.even = getGap(n => n % 2 === 0);
+            gaps.odd = getGap(n => n % 2 !== 0);
+
+            // Dozens
+            gaps.doz1 = getGap(n => n >= 1 && n <= 12);
+            gaps.doz2 = getGap(n => n >= 13 && n <= 24);
+            gaps.doz3 = getGap(n => n >= 25 && n <= 36);
+
+            // Columns
+            gaps.col1 = getGap(n => COL_1.includes(n));
+            gaps.col2 = getGap(n => COL_2.includes(n));
+            gaps.col3 = getGap(n => COL_3.includes(n));
+
+            // --- STRATEGY RULES ---
+
+            // 1. COLORS / PARITY (Streak Breaker)
+            // If one hasn't appeared in > 4 spins, probability of regression suggests it.
+            if (gaps.red > 4) suggestions.push({ text: "Apostar ROJO", val: `Hace ${gaps.red} giros`, type: "prob-med" });
+            if (gaps.black > 4) suggestions.push({ text: "Apostar NEGRO", val: `Hace ${gaps.black} giros`, type: "prob-med" });
+            
+            if (gaps.even > 5) suggestions.push({ text: "Apostar PARES", val: `Hace ${gaps.even} giros`, type: "prob-med" });
+            if (gaps.odd > 5) suggestions.push({ text: "Apostar IMPARES", val: `Hace ${gaps.odd} giros`, type: "prob-med" });
+
+            // 2. DOZENS / COLUMNS (High value targets)
+            // Probability of a dozen not hitting for 8 spins is low (<20%). Good entry point.
+            // Critical at > 12 spins.
+            
+            const checkZone = (gap, name) => {
+                if (gap > 12) suggestions.push({ text: `Apostar ${name}`, val: `CRÍTICO (${gap})`, type: "prob-high" });
+                else if (gap > 7) suggestions.push({ text: `Apostar ${name}`, val: `Retraso ${gap}`, type: "prob-med" });
+            };
+
+            checkZone(gaps.doz1, "1ª Docena");
+            checkZone(gaps.doz2, "2ª Docena");
+            checkZone(gaps.doz3, "3ª Docena");
+
+            checkZone(gaps.col1, "Columna 1");
+            checkZone(gaps.col2, "Columna 2");
+            checkZone(gaps.col3, "Columna 3");
+
+            // Render
+            const container = document.getElementById('suggestionList');
+            const noSugg = document.getElementById('noSuggestions');
+            container.innerHTML = '';
+            
+            if (suggestions.length === 0) {
+                noSugg.classList.remove('hidden');
+            } else {
+                noSugg.classList.add('hidden');
+                // Sort by urgency (strings check is simplistic but works for "CRÍTICO" vs "Hace")
+                suggestions.sort((a,b) => b.val.includes("CRÍTICO") ? 1 : -1);
+                
+                suggestions.forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = `sugg-card ${s.type}`;
+                    div.innerHTML = `<span class="sugg-label">${s.text}</span><span class="sugg-val">${s.val}</span>`;
+                    container.appendChild(div);
+                });
             }
         }
 
-        // --- RENDERERS ---
-        function renderStatsUI(game) {
-            const sorted = Object.values(gameStats).sort((a,b) => b.count - a.count);
-            const hotDiv = document.getElementById('hot-list');
-            const coldDiv = document.getElementById('cold-list');
-            
-            hotDiv.innerHTML = '';
-            coldDiv.innerHTML = '';
-
-            sorted.slice(0, 5).forEach(s => {
-                let idDisplay = s.id;
-                if (game.config.type === 'quiniela' && s.id < 10) idDisplay = '0' + s.id;
-                hotDiv.innerHTML += `<div class="flex justify-between bg-white/5 p-1 px-2 rounded"><span class="font-bold">${idDisplay}</span> <span class="opacity-50">${s.count}</span></div>`;
-            });
-            
-            sorted.slice(-5).reverse().forEach(s => {
-                let idDisplay = s.id;
-                if (game.config.type === 'quiniela' && s.id < 10) idDisplay = '0' + s.id;
-                coldDiv.innerHTML += `<div class="flex justify-between bg-white/5 p-1 px-2 rounded"><span class="font-bold">${idDisplay}</span> <span class="opacity-50">${s.count}</span></div>`;
-            });
+        function updatePredictionBox(id, num) {
+            const el = document.getElementById(id);
+            el.innerText = num;
+            el.className = "prediction-number";
+            if (num === 0) el.classList.add('text-green-400');
+            else if (RED_NUMBERS.includes(num)) el.classList.add('text-red-400');
+            else el.classList.add('text-slate-200');
         }
 
-        function renderHistory(game, highlightFirst = false) {
-            const tbody = document.getElementById('history-table');
-            tbody.innerHTML = '';
-
-            game.data.forEach((d, index) => {
-                let resultHTML = '';
-                let actionBtn = '';
-
-                // Always allow editing
-                actionBtn = `<button onclick="openAddModal('${d.date}', true)" class="ml-2 text-slate-500 hover:text-white transition" title="Editar"><i class="fa-solid fa-pencil"></i></button>`;
-                
-                // Pending State override
-                if (d.pending) {
-                    resultHTML = `<button onclick="openAddModal('${d.date}', true)" class="text-xs bg-yellow-500/20 text-yellow-200 border border-yellow-500/50 px-3 py-1 rounded hover:bg-yellow-500/40 transition flex items-center gap-1"><i class="fa-solid fa-pen"></i> Cargar Resultados</button>`;
-                    actionBtn = ''; // Hide small pencil if large button exists
-                } else {
-                    if(currentGame === 'telekino') {
-                        resultHTML = `<div class="grid grid-cols-8 gap-1 gap-y-1 justify-end">${d.main.map(n => `<span class="text-[10px] bg-yellow-500/20 text-yellow-200 px-1 rounded text-center">${n}</span>`).join('')}</div>`;
-                    } 
-                    else if (currentGame === 'pick3') {
-                         resultHTML = `<div class="flex gap-2 justify-end">${d.main.map(n => `<span class="w-6 h-6 flex items-center justify-center bg-purple-500 rounded text-white font-bold text-xs shadow">${n}</span>`).join('')}</div>`;
-                    } 
-                    else if (currentGame === 'mendoza') {
-                         let cabeza = d.main[0].toString().padStart(4, '0');
-                         resultHTML = `<div class="flex flex-col items-end">
-                            <span class="text-lg font-bold text-rose-300 bg-rose-900/50 px-2 rounded border border-rose-500/50 mb-1">${cabeza}</span>
-                            <span class="text-[10px] text-white/50">y 19 más...</span>
-                         </div>`;
-                    }
-                    else {
-                        const nums = d.main.map(n => n < 10 ? '0'+n : n).join(' - ');
-                        let extra = '';
-                        if(d.extra) {
-                            let exClass = 'bg-red-500/80';
-                            if (currentGame === 'lucky') exClass = 'bg-green-600/80';
-                            extra = `<span class="ml-2 ${exClass} text-white px-1.5 rounded-full text-xs font-bold">${d.extra}</span>`;
-                        }
-                        resultHTML = `<span>${nums}</span> ${extra}`;
-                    }
-                }
-
-                const rowClass = (index === 0 && highlightFirst) ? 'new-draw-row bg-green-500/10' : 'hover:bg-white/5';
-
-                tbody.innerHTML += `
-                    <tr class="border-b border-white/5 transition ${rowClass}">
-                        <td class="px-4 py-2 font-mono text-xs opacity-70 whitespace-nowrap align-middle">
-                            ${d.date}
-                            ${actionBtn}
-                        </td>
-                        <td class="px-4 py-2 text-right font-bold text-white tracking-widest align-middle flex justify-end items-center">
-                            ${resultHTML}
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function renderChart(game) {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if(chartInstance) chartInstance.destroy();
-
-            let limit = 25; 
-            if (currentGame === 'pick3') limit = 10;
-            if (currentGame === 'mendoza') limit = 30;
-
-            const sorted = Object.values(gameStats).sort((a,b) => b.count - a.count).slice(0, limit);
-            
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sorted.map(s => {
-                        if (currentGame === 'mendoza' && s.id < 10) return '0'+s.id;
-                        return s.id;
-                    }),
-                    datasets: [{
-                        label: 'Frecuencia',
-                        data: sorted.map(s => s.count),
-                        backgroundColor: game.color,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' } },
-                        x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.5)', font: {size: 10} } }
-                    }
-                }
-            });
+        function saveState() { localStorage.setItem('roulette_ai_history', JSON.stringify(history)); }
+        function loadState() {
+            const saved = localStorage.getItem('roulette_ai_history');
+            if (saved) { history = JSON.parse(saved); updateUI(); }
         }
     </script>
 </body>
