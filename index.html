@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Master AI</title>
+    <title>Roulette Master AI + OCR + Bulk</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
@@ -92,18 +93,18 @@
         .tracker-val { font-size: 1rem; font-weight: 800; }
         .tracker-sub { font-size: 0.6rem; opacity: 0.6; }
 
-        /* HEATMAP COLORS - NUEVA LOGICA */
+        /* HEATMAP COLORS */
         .status-normal { background-color: #1e293b; color: #94a3b8; }
-        
-        /* > 7 Tiros: Fucsia */
-        .status-fuchsia { background-color: #831843; color: #fbcfe8; border-color: #db2777; } 
-        
-        /* > 10 Tiros: Amarillo */
+        .status-purple { background-color: #581c87; color: #e9d5ff; border-color: #a855f7; }
+        .status-red { background-color: #7f1d1d; color: #fecaca; border-color: #ef4444; animation: pulse-red 2s infinite; }
         .status-yellow { background-color: #713f12; color: #fef08a; border-color: #eab308; }
-        
-        /* > 15 Tiros: Verde (Oportunidad) */
         .status-green { background-color: #14532d; color: #bbf7d0; border-color: #22c55e; animation: pulse-green 2s infinite; }
 
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
         @keyframes pulse-green {
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
             70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
@@ -116,9 +117,70 @@
             0%, 100% { opacity: 1; }
             50% { opacity: .7; }
         }
+        
+        .summary-badge {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        /* Scan Overlay */
+        #scanOverlay {
+            background: rgba(0,0,0,0.9);
+            z-index: 100;
+        }
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e;
+            animation: scanMove 2s infinite linear;
+        }
+        @keyframes scanMove {
+            0% { transform: translateY(-100px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(100px); opacity: 0; }
+        }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden bg-slate-950">
+
+    <!-- HIDDEN INPUT FOR CAMERA -->
+    <input type="file" id="cameraInput" accept="image/*" style="display:none" onchange="processImage(this)">
+
+    <!-- TEXT IMPORT MODAL -->
+    <div id="textModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 p-4 rounded-xl w-full max-w-lg border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-bold text-white"><i class="fas fa-paste mr-2"></i>Importar Texto Masivo</h3>
+                <button onclick="closeTextModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-xs text-slate-400 mb-2">Orden: El <strong>PRIMER</strong> número que escribas será el <strong>MÁS RECIENTE</strong> (Último en salir).</p>
+            <textarea id="bulkTextInput" class="w-full flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white font-mono mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none h-40" placeholder="32, 19, 21..."></textarea>
+            <div class="flex gap-2 justify-end">
+                <button onclick="closeTextModal()" class="px-4 py-2 bg-slate-700 text-white rounded text-sm hover:bg-slate-600">Cancelar</button>
+                <button onclick="processBulkText()" class="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-bold hover:bg-indigo-500 shadow-lg shadow-indigo-900/50">
+                    <i class="fas fa-check mr-1"></i> PROCESAR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCAN LOADING OVERLAY -->
+    <div id="scanOverlay" class="hidden fixed inset-0 flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-16 h-16 border-2 border-green-500 rounded-lg relative overflow-hidden mb-4 flex items-center justify-center">
+            <i class="fas fa-camera text-2xl text-green-500"></i>
+            <div class="absolute top-0 left-0 right-0 scan-line"></div>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Analizando imagen...</h3>
+        <p class="text-slate-400 text-sm mb-4">Estamos extrayendo los números. Por favor espera.</p>
+        <p id="scanStatus" class="text-xs text-slate-500 font-mono">Iniciando motor OCR...</p>
+    </div>
 
     <!-- LEFT PANEL: Dashboard -->
     <div class="flex-1 flex flex-col h-full overflow-hidden">
@@ -131,8 +193,16 @@
                     <i class="fas fa-chart-line mr-2"></i>Monitor
                 </h1>
                 <div class="flex gap-2">
+                    <!-- TEXT IMPORT BUTTON -->
+                    <button onclick="openTextModal()" class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-500 transition shadow-lg shadow-blue-900/50 flex items-center gap-1">
+                        <i class="fas fa-edit"></i> TEXTO
+                    </button>
+                    <!-- CAMERA BUTTON -->
+                    <button onclick="document.getElementById('cameraInput').click()" class="px-3 py-1 bg-indigo-600 text-white rounded text-[10px] hover:bg-indigo-500 transition shadow-lg shadow-indigo-900/50 flex items-center gap-1">
+                        <i class="fas fa-camera"></i> FOTO
+                    </button>
                     <button onclick="undoLast()" class="px-3 py-1 bg-slate-800 rounded text-[10px] hover:bg-slate-700 transition border border-slate-700">
-                        <i class="fas fa-undo mr-1"></i>DESHACER
+                        <i class="fas fa-undo"></i>
                     </button>
                     <button onclick="confirmReset()" class="px-3 py-1 bg-red-900/30 text-red-400 rounded text-[10px] hover:bg-red-900/50 transition border border-red-900/30">
                         <i class="fas fa-trash"></i>
@@ -148,7 +218,7 @@
                 <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none"></div>
             </div>
 
-            <!-- AI PREDICTIONS (Always visible, placeholders if empty) -->
+            <!-- AI PREDICTIONS -->
             <div class="grid grid-cols-3 gap-2 mb-2">
                 <div class="prediction-box flex flex-col items-center justify-center p-2 text-center">
                     <div class="text-[9px] uppercase text-red-300 font-bold mb-0 tracking-wider">Tendencia 🔥</div>
@@ -166,7 +236,7 @@
                 </div>
             </div>
             
-            <!-- LIVE TRACKER GRID (The Core Request) -->
+            <!-- LIVE TRACKER GRID -->
             <div id="trackerDashboard">
                 <h3 class="text-[10px] text-slate-500 uppercase font-bold mb-1 tracking-widest pl-1">Probabilidades en Vivo (Atrasos)</h3>
                 
@@ -220,7 +290,7 @@
 
                 <!-- Columns -->
                 <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3">Columnas</h4>
-                <div class="tracker-grid">
+                <div class="tracker-grid mb-3">
                     <div id="track-col1" class="tracker-cell status-normal">
                         <span class="tracker-label">Col 1</span>
                         <span id="val-col1" class="tracker-val">0</span>
@@ -232,6 +302,27 @@
                     <div id="track-col3" class="tracker-cell status-normal">
                         <span class="tracker-label">Col 3</span>
                         <span id="val-col3" class="tracker-val">0</span>
+                    </div>
+                </div>
+
+                <!-- Alerts Summary -->
+                <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3 font-bold border-t border-slate-800 pt-2">Resumen de Alertas Activas</h4>
+                <div class="grid grid-cols-1 gap-1" id="alertsSummary">
+                    <div class="summary-badge status-green">
+                        <span>🟢 Oportunidad Alta (15+)</span>
+                        <span id="count-green">0</span>
+                    </div>
+                    <div class="summary-badge status-yellow">
+                        <span>🟡 Atención (10+)</span>
+                        <span id="count-yellow">0</span>
+                    </div>
+                    <div class="summary-badge status-red">
+                        <span>🔴 Alerta Media (7+)</span>
+                        <span id="count-red">0</span>
+                    </div>
+                    <div class="summary-badge status-purple">
+                        <span>🟣 En Espera (5+)</span>
+                        <span id="count-purple">0</span>
                     </div>
                 </div>
             </div>
@@ -311,6 +402,47 @@
         function confirmReset() { document.getElementById('resetModal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('resetModal').classList.add('hidden'); }
         function fullReset() { history = []; saveState(); updateUI(); closeModal(); }
+        
+        // --- TEXT MODAL FUNCTIONS ---
+        function openTextModal() {
+            document.getElementById('textModal').classList.remove('hidden');
+            document.getElementById('bulkTextInput').focus();
+        }
+        function closeTextModal() {
+            document.getElementById('textModal').classList.add('hidden');
+        }
+        function processBulkText() {
+            const rawText = document.getElementById('bulkTextInput').value;
+            // Match any number 0-36
+            const foundNumbers = rawText.match(/\b([0-9]|[1-2][0-9]|3[0-6])\b/g);
+            
+            if (foundNumbers && foundNumbers.length > 0) {
+                // Invertimos la lista encontrada para que el PRIMER número del texto
+                // sea procesado al final y quede en la cima del historial (unshift).
+                // Ejemplo Texto: "32 15 0"
+                // Match: ["32", "15", "0"]
+                // Reverse: ["0", "15", "32"]
+                // Loop:
+                // 1. addNumber(0)  -> History: [0]
+                // 2. addNumber(15) -> History: [15, 0]
+                // 3. addNumber(32) -> History: [32, 15, 0] 
+                // Resultado: 32 es el más reciente (index 0).
+                
+                let count = 0;
+                foundNumbers.reverse().forEach(n => {
+                    let val = parseInt(n);
+                    if (!isNaN(val) && val >= 0 && val <= 36) {
+                        addNumber(val);
+                        count++;
+                    }
+                });
+                alert(`✅ Se han importado ${count} números exitosamente.`);
+                closeTextModal();
+                document.getElementById('bulkTextInput').value = ''; // clear
+            } else {
+                alert("❌ No se encontraron números válidos (0-36).");
+            }
+        }
 
         function getColorClass(num) {
             if (num === 0) return 'bg-r-green';
@@ -320,8 +452,6 @@
         function updateUI() {
             renderHistory();
             document.getElementById('totalSpins').innerText = `TIROS: ${history.length}`;
-            
-            // Always run analysis now, regardless of history length
             calculatePredictions();
             updateDashboard();
         }
@@ -342,6 +472,57 @@
                 list.appendChild(badge);
             });
         }
+
+        // --- IMAGE OCR PROCESSING ---
+        function processImage(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            
+            // Show Overlay
+            const overlay = document.getElementById('scanOverlay');
+            const status = document.getElementById('scanStatus');
+            overlay.classList.remove('hidden');
+            status.innerText = "Inicializando Tesseract...";
+
+            Tesseract.recognize(
+                file,
+                'eng',
+                {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            status.innerText = `Leyendo números: ${Math.round(m.progress * 100)}%`;
+                        } else {
+                            status.innerText = m.status;
+                        }
+                    }
+                }
+            ).then(({ data: { text } }) => {
+                const foundNumbers = text.match(/\b([0-9]|[1-2][0-9]|3[0-6])\b/g);
+                
+                if (foundNumbers && foundNumbers.length > 0) {
+                    let addedCount = 0;
+                    // También invertimos para OCR asumiendo lectura top-down estándar
+                    // donde el top suele ser el más reciente en listas de historial visual.
+                    foundNumbers.reverse().forEach(n => {
+                        let val = parseInt(n);
+                        if (!isNaN(val) && val >= 0 && val <= 36) {
+                            addNumber(val);
+                            addedCount++;
+                        }
+                    });
+                    alert(`¡Escaneo completo! Se detectaron y agregaron ${addedCount} números.`);
+                } else {
+                    alert("No se detectaron números claros (0-36). Intenta con una imagen más nítida.");
+                }
+            }).catch(err => {
+                console.error(err);
+                alert("Error al procesar la imagen.");
+            }).finally(() => {
+                overlay.classList.add('hidden');
+                input.value = ''; // reset input
+            });
+        }
+
 
         function calculatePredictions() {
             if (history.length < 3) {
@@ -393,7 +574,7 @@
         function updatePredictionBox(id, num) {
             const el = document.getElementById(id);
             el.innerText = num;
-            el.className = "prediction-number"; // reset
+            el.className = "prediction-number"; 
             if (num === '-' || num === undefined) {
                 el.classList.add('text-slate-500');
                 return;
@@ -403,10 +584,16 @@
             else el.classList.add('text-slate-200');
         }
 
+        // --- Alert Counts ---
+        let countGreen = 0;
+        let countYellow = 0;
+        let countRed = 0;
+        let countPurple = 0;
+
         function updateDashboard() {
-            // Calculate GAPS (spins since last hit)
-            // If history is empty, all gaps are 0
-            
+            // Reset counts
+            countGreen = 0; countYellow = 0; countRed = 0; countPurple = 0;
+
             function getGap(checkFn) {
                 if (history.length === 0) return 0;
                 for(let i=0; i<history.length; i++) {
@@ -429,9 +616,7 @@
                 col3: getGap(n => COL_3.includes(n))
             };
 
-            // Update DOM & Colors - NOW USING NEW LOGIC
-            // Note: We don't need to pass thresholds anymore, the function handles it globally
-            
+            // Update DOM & Colors
             updateCell('track-red', 'val-red', gaps.red);
             updateCell('track-black', 'val-black', gaps.black);
             
@@ -445,6 +630,12 @@
             updateCell('track-col1', 'val-col1', gaps.col1);
             updateCell('track-col2', 'val-col2', gaps.col2);
             updateCell('track-col3', 'val-col3', gaps.col3);
+
+            // Update Summary Counts
+            document.getElementById('count-green').innerText = countGreen;
+            document.getElementById('count-yellow').innerText = countYellow;
+            document.getElementById('count-red').innerText = countRed;
+            document.getElementById('count-purple').innerText = countPurple;
         }
 
         function updateCell(cardId, valId, gap) {
@@ -456,13 +647,19 @@
             // Reset classes
             card.className = "tracker-cell";
             
-            // New Logic: 7 (Fucsia) -> 10 (Amarillo) -> 15 (Verde)
+            // ALERT LOGIC HIERARCHY
             if (gap >= 15) {
                 card.classList.add('status-green');
+                countGreen++;
             } else if (gap >= 10) {
                 card.classList.add('status-yellow');
+                countYellow++;
             } else if (gap >= 7) {
-                card.classList.add('status-fuchsia');
+                card.classList.add('status-red');
+                countRed++;
+            } else if (gap >= 5) {
+                card.classList.add('status-purple');
+                countPurple++;
             } else {
                 card.classList.add('status-normal');
             }
