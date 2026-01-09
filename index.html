@@ -95,10 +95,13 @@
 
         /* HEATMAP COLORS */
         .status-normal { background-color: #1e293b; color: #94a3b8; }
+        
         .status-purple { background-color: #581c87; color: #e9d5ff; border-color: #a855f7; }
         .status-red { background-color: #7f1d1d; color: #fecaca; border-color: #ef4444; animation: pulse-red 2s infinite; }
         .status-yellow { background-color: #713f12; color: #fef08a; border-color: #eab308; }
         .status-green { background-color: #14532d; color: #bbf7d0; border-color: #22c55e; animation: pulse-green 2s infinite; }
+        /* NEW BLUE STATUS */
+        .status-blue { background-color: #1e3a8a; color: #bfdbfe; border-color: #3b82f6; animation: pulse-blue 1.5s infinite; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
 
         @keyframes pulse-red {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
@@ -109,6 +112,11 @@
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
             70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
             100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        @keyframes pulse-blue {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); border-color: #60a5fa; }
+            50% { box-shadow: 0 0 10px 4px rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); border-color: #60a5fa; }
         }
 
         .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
@@ -306,23 +314,47 @@
                 </div>
 
                 <!-- Alerts Summary -->
-                <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3 font-bold border-t border-slate-800 pt-2">Resumen de Alertas Activas</h4>
+                <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3 font-bold border-t border-slate-800 pt-2">Resumen de Alertas (Sesión)</h4>
                 <div class="grid grid-cols-1 gap-1" id="alertsSummary">
+                    <div class="summary-badge status-blue">
+                        <span>🔵 Super Oportunidad (20+)</span>
+                        <div class="flex gap-2 text-[10px]">
+                            <span>Act: <b id="count-blue" class="text-sm">0</b></span>
+                            <span class="opacity-70">|</span>
+                            <span>Total: <b id="hist-blue" class="text-sm">0</b></span>
+                        </div>
+                    </div>
                     <div class="summary-badge status-green">
-                        <span>🟢 Oportunidad Alta (15+)</span>
-                        <span id="count-green">0</span>
+                        <span>🟢 Oportunidad (15+)</span>
+                        <div class="flex gap-2 text-[10px]">
+                            <span>Act: <b id="count-green" class="text-sm">0</b></span>
+                            <span class="opacity-70">|</span>
+                            <span>Total: <b id="hist-green" class="text-sm">0</b></span>
+                        </div>
                     </div>
                     <div class="summary-badge status-yellow">
                         <span>🟡 Atención (10+)</span>
-                        <span id="count-yellow">0</span>
+                        <div class="flex gap-2 text-[10px]">
+                            <span>Act: <b id="count-yellow" class="text-sm">0</b></span>
+                            <span class="opacity-70">|</span>
+                            <span>Total: <b id="hist-yellow" class="text-sm">0</b></span>
+                        </div>
                     </div>
                     <div class="summary-badge status-red">
                         <span>🔴 Alerta Media (7+)</span>
-                        <span id="count-red">0</span>
+                        <div class="flex gap-2 text-[10px]">
+                            <span>Act: <b id="count-red" class="text-sm">0</b></span>
+                            <span class="opacity-70">|</span>
+                            <span>Total: <b id="hist-red" class="text-sm">0</b></span>
+                        </div>
                     </div>
                     <div class="summary-badge status-purple">
                         <span>🟣 En Espera (5+)</span>
-                        <span id="count-purple">0</span>
+                        <div class="flex gap-2 text-[10px]">
+                            <span>Act: <b id="count-purple" class="text-sm">0</b></span>
+                            <span class="opacity-70">|</span>
+                            <span>Total: <b id="hist-purple" class="text-sm">0</b></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -419,15 +451,6 @@
             if (foundNumbers && foundNumbers.length > 0) {
                 // Invertimos la lista encontrada para que el PRIMER número del texto
                 // sea procesado al final y quede en la cima del historial (unshift).
-                // Ejemplo Texto: "32 15 0"
-                // Match: ["32", "15", "0"]
-                // Reverse: ["0", "15", "32"]
-                // Loop:
-                // 1. addNumber(0)  -> History: [0]
-                // 2. addNumber(15) -> History: [15, 0]
-                // 3. addNumber(32) -> History: [32, 15, 0] 
-                // Resultado: 32 es el más reciente (index 0).
-                
                 let count = 0;
                 foundNumbers.reverse().forEach(n => {
                     let val = parseInt(n);
@@ -501,8 +524,6 @@
                 
                 if (foundNumbers && foundNumbers.length > 0) {
                     let addedCount = 0;
-                    // También invertimos para OCR asumiendo lectura top-down estándar
-                    // donde el top suele ser el más reciente en listas de historial visual.
                     foundNumbers.reverse().forEach(n => {
                         let val = parseInt(n);
                         if (!isNaN(val) && val >= 0 && val <= 36) {
@@ -585,14 +606,17 @@
         }
 
         // --- Alert Counts ---
-        let countGreen = 0;
-        let countYellow = 0;
-        let countRed = 0;
-        let countPurple = 0;
+        // Current active alerts
+        let activeGreen = 0, activeYellow = 0, activeRed = 0, activePurple = 0, activeBlue = 0;
+        // Total Session stats
+        let totalStats = { green:0, yellow:0, red:0, purple:0, blue:0 };
 
         function updateDashboard() {
-            // Reset counts
-            countGreen = 0; countYellow = 0; countRed = 0; countPurple = 0;
+            // 1. Calculate Session Total Stats (Replay History)
+            calculateSessionStats();
+
+            // 2. Calculate Current Stats (Active)
+            activeGreen = 0; activeYellow = 0; activeRed = 0; activePurple = 0; activeBlue = 0;
 
             function getGap(checkFn) {
                 if (history.length === 0) return 0;
@@ -631,11 +655,63 @@
             updateCell('track-col2', 'val-col2', gaps.col2);
             updateCell('track-col3', 'val-col3', gaps.col3);
 
-            // Update Summary Counts
-            document.getElementById('count-green').innerText = countGreen;
-            document.getElementById('count-yellow').innerText = countYellow;
-            document.getElementById('count-red').innerText = countRed;
-            document.getElementById('count-purple').innerText = countPurple;
+            // Update Summary (Active vs Historical)
+            document.getElementById('count-blue').innerText = activeBlue;
+            document.getElementById('hist-blue').innerText = totalStats.blue;
+
+            document.getElementById('count-green').innerText = activeGreen;
+            document.getElementById('hist-green').innerText = totalStats.green;
+            
+            document.getElementById('count-yellow').innerText = activeYellow;
+            document.getElementById('hist-yellow').innerText = totalStats.yellow;
+            
+            document.getElementById('count-red').innerText = activeRed;
+            document.getElementById('hist-red').innerText = totalStats.red;
+            
+            document.getElementById('count-purple').innerText = activePurple;
+            document.getElementById('hist-purple').innerText = totalStats.purple;
+        }
+
+        function calculateSessionStats() {
+            // Replay history from Oldest to Newest to count all alerts triggered
+            totalStats = { green:0, yellow:0, red:0, purple:0, blue:0 };
+            
+            if (history.length === 0) return;
+
+            // Trackers configuration for replay
+            const trackers = [
+                { id: 'red', gap: 0, check: (n) => RED_NUMBERS.includes(n) },
+                { id: 'black', gap: 0, check: (n) => !RED_NUMBERS.includes(n) },
+                { id: 'even', gap: 0, check: (n) => n % 2 === 0 },
+                { id: 'odd', gap: 0, check: (n) => n % 2 !== 0 },
+                { id: 'd1', gap: 0, check: (n) => n >= 1 && n <= 12 },
+                { id: 'd2', gap: 0, check: (n) => n >= 13 && n <= 24 },
+                { id: 'd3', gap: 0, check: (n) => n >= 25 && n <= 36 },
+                { id: 'c1', gap: 0, check: (n) => COL_1.includes(n) },
+                { id: 'c2', gap: 0, check: (n) => COL_2.includes(n) },
+                { id: 'c3', gap: 0, check: (n) => COL_3.includes(n) }
+            ];
+
+            // Replay
+            const reversedHistory = history.slice().reverse();
+            
+            reversedHistory.forEach(num => {
+                if (num === 0) return; // Skip 0 for gap logic generally in this simplified model
+
+                trackers.forEach(t => {
+                    if (t.check(num)) {
+                        t.gap = 0; // Hit, reset gap
+                    } else {
+                        t.gap++; // Miss, increase gap
+                        // Check if it hit a threshold exactly on this spin
+                        if (t.gap === 5) totalStats.purple++;
+                        if (t.gap === 7) totalStats.red++;
+                        if (t.gap === 10) totalStats.yellow++;
+                        if (t.gap === 15) totalStats.green++;
+                        if (t.gap === 20) totalStats.blue++;
+                    }
+                });
+            });
         }
 
         function updateCell(cardId, valId, gap) {
@@ -647,19 +723,22 @@
             // Reset classes
             card.className = "tracker-cell";
             
-            // ALERT LOGIC HIERARCHY
-            if (gap >= 15) {
+            // ALERT LOGIC HIERARCHY (Updated with Blue)
+            if (gap >= 20) {
+                card.classList.add('status-blue');
+                activeBlue++;
+            } else if (gap >= 15) {
                 card.classList.add('status-green');
-                countGreen++;
+                activeGreen++;
             } else if (gap >= 10) {
                 card.classList.add('status-yellow');
-                countYellow++;
+                activeYellow++;
             } else if (gap >= 7) {
                 card.classList.add('status-red');
-                countRed++;
+                activeRed++;
             } else if (gap >= 5) {
                 card.classList.add('status-purple');
-                countPurple++;
+                activePurple++;
             } else {
                 card.classList.add('status-normal');
             }
