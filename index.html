@@ -97,86 +97,93 @@
         }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
+<body class="h-screen flex overflow-hidden bg-slate-950">
 
-    <!-- Header & Predictions -->
-    <div class="flex-none p-3 pb-0 bg-slate-900 z-10 shadow-xl">
-        <div class="flex justify-between items-center mb-2">
-            <h1 class="text-sm font-bold text-indigo-400 uppercase tracking-wider"><i class="fas fa-brain mr-1"></i>IA Master</h1>
-            <div class="flex gap-2">
-                <button onclick="undoLast()" class="px-3 py-1 bg-slate-700 rounded text-xs hover:bg-slate-600">
-                    <i class="fas fa-undo"></i>
-                </button>
-                <button onclick="confirmReset()" class="px-3 py-1 bg-red-900/40 text-red-300 rounded text-xs hover:bg-red-900/60">
-                    <i class="fas fa-trash"></i>
-                </button>
+    <!-- LEFT PANEL: Functions & Stats -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <!-- Scrollable Container -->
+        <div class="flex-1 overflow-y-auto p-3 space-y-3">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-2 bg-slate-900/50 p-2 rounded-xl border border-slate-800">
+                <h1 class="text-sm font-bold text-indigo-400 uppercase tracking-wider"><i class="fas fa-brain mr-1"></i>IA Master</h1>
+                <div class="flex gap-2">
+                    <button onclick="undoLast()" class="px-3 py-1 bg-slate-700 rounded text-xs hover:bg-slate-600 transition">
+                        <i class="fas fa-undo mr-1"></i>Deshacer
+                    </button>
+                    <button onclick="confirmReset()" class="px-3 py-1 bg-red-900/40 text-red-300 rounded text-xs hover:bg-red-900/60 transition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <!-- MAIN PREDICTION AREA (NUMBERS) -->
-        <div id="predictionArea" class="hidden grid-cols-3 gap-2 mb-3">
-            <div class="stat-card prediction-box flex flex-col items-center justify-center p-2 text-center">
-                <div class="text-[10px] uppercase text-red-300 font-bold mb-1 tracking-wider">Tendencia 🔥</div>
-                <div id="predHot" class="prediction-number text-red-400">-</div>
+            <!-- History Strip -->
+            <div class="relative border-b border-slate-800 pb-2 mb-2">
+                <div id="historyList" class="flex overflow-x-auto py-1 items-center h-12 scrollbar-hide"></div>
+                <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none"></div>
+            </div>
+
+            <div id="startMsg" class="text-center py-6 text-slate-500 text-sm bg-slate-800/50 rounded-lg border border-slate-700 border-dashed">
+                Ingresa al menos 5 números en el panel derecho para activar la IA
+            </div>
+
+            <!-- PREDICTION AREA -->
+            <div id="predictionArea" class="hidden grid-cols-3 gap-2">
+                <div class="stat-card prediction-box flex flex-col items-center justify-center p-2 text-center">
+                    <div class="text-[10px] uppercase text-red-300 font-bold mb-1 tracking-wider">Tendencia 🔥</div>
+                    <div id="predHot" class="prediction-number text-red-400">-</div>
+                </div>
+                
+                <div class="stat-card prediction-box flex flex-col items-center justify-center p-2 text-center border-indigo-500 shadow-indigo-500/20 shadow-lg transform scale-105 z-10">
+                    <div class="text-[10px] uppercase text-indigo-300 font-bold mb-1 tracking-wider">Probable 🎯</div>
+                    <div id="predSmart" class="prediction-number text-white animate-pulse-slow">-</div>
+                </div>
+
+                <div class="stat-card prediction-box flex flex-col items-center justify-center p-2 text-center">
+                    <div class="text-[10px] uppercase text-cyan-300 font-bold mb-1 tracking-wider">Atrasado ❄️</div>
+                    <div id="predCold" class="prediction-number text-cyan-400">-</div>
+                </div>
             </div>
             
-            <div class="stat-card prediction-box flex flex-col items-center justify-center p-2 text-center border-indigo-500 shadow-indigo-500/20 shadow-lg transform scale-105 z-10">
-                <div class="text-[10px] uppercase text-indigo-300 font-bold mb-1 tracking-wider">Probable 🎯</div>
-                <div id="predSmart" class="prediction-number text-white animate-pulse-slow">-</div>
+            <!-- STRATEGY SUGGESTIONS -->
+            <div id="strategySection" class="hidden">
+                <h3 class="text-xs text-slate-400 uppercase font-bold mb-2 tracking-widest pl-1">Oportunidades</h3>
+                <div id="suggestionList" class="flex flex-col">
+                    <!-- JS inserts cards -->
+                </div>
+                <div id="noSuggestions" class="text-xs text-slate-600 italic text-center py-2">Mesa equilibrada...</div>
             </div>
 
-            <div class="stat-card prediction-box flex flex-col items-center justify-center p-2 text-center">
-                <div class="text-[10px] uppercase text-cyan-300 font-bold mb-1 tracking-wider">Atrasado ❄️</div>
-                <div id="predCold" class="prediction-number text-cyan-400">-</div>
+            <!-- Quick Stats Bars -->
+            <div id="statsRow" class="hidden grid-cols-2 gap-3">
+                <div class="stat-card p-2">
+                    <div class="flex justify-between text-xs text-slate-400 mb-1"><span>Rojo</span><span id="txtRed">0%</span></div>
+                    <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden"><div id="barRed" class="h-full bg-red-500 transition-all duration-500" style="width:0%"></div></div>
+                </div>
+                <div class="stat-card p-2">
+                    <div class="flex justify-between text-xs text-slate-400 mb-1"><span>Negro</span><span id="txtBlack">0%</span></div>
+                    <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden"><div id="barBlack" class="h-full bg-slate-400 transition-all duration-500" style="width:0%"></div></div>
+                </div>
             </div>
-        </div>
-        
-        <div id="startMsg" class="text-center py-6 text-slate-500 text-sm bg-slate-800/50 rounded-lg mb-3 border border-slate-700 border-dashed">
-            Ingresa al menos 5 números para activar la IA
-        </div>
-
-        <!-- History Strip -->
-        <div class="relative border-t border-slate-800 pt-2">
-            <div id="historyList" class="flex overflow-x-auto py-1 items-center h-12 scrollbar-hide"></div>
-            <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-900 to-transparent pointer-events-none"></div>
         </div>
     </div>
 
-    <!-- Main Content Area (Scrollable) -->
-    <div class="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-950">
+    <!-- RIGHT PANEL: Vertical Numbers Input -->
+    <div class="w-[140px] md:w-[160px] bg-slate-900 border-l border-slate-800 flex flex-col h-full shadow-2xl z-20">
+        <div class="p-2 border-b border-slate-800 bg-slate-800/50">
+            <h2 class="text-[10px] text-slate-400 uppercase font-bold text-center tracking-widest">Entrada</h2>
+        </div>
         
-        <!-- STRATEGY SUGGESTIONS (New Section) -->
-        <div id="strategySection" class="hidden">
-            <h3 class="text-xs text-slate-400 uppercase font-bold mb-2 tracking-widest pl-1">Oportunidades Detectadas</h3>
-            <div id="suggestionList" class="flex flex-col">
-                <!-- JS will insert cards here -->
-            </div>
-            <div id="noSuggestions" class="text-xs text-slate-600 italic text-center py-2">Mesa equilibrada, esperando desvíos...</div>
-        </div>
-
-        <!-- Quick Stats Bars -->
-        <div id="statsRow" class="hidden grid-cols-2 gap-3">
-            <div class="stat-card p-2">
-                <div class="flex justify-between text-xs text-slate-400 mb-1"><span>Rojo</span><span id="txtRed">0%</span></div>
-                <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden"><div id="barRed" class="h-full bg-red-500 transition-all duration-500" style="width:0%"></div></div>
-            </div>
-            <div class="stat-card p-2">
-                <div class="flex justify-between text-xs text-slate-400 mb-1"><span>Negro</span><span id="txtBlack">0%</span></div>
-                <div class="h-1.5 bg-slate-700 rounded-full overflow-hidden"><div id="barBlack" class="h-full bg-slate-400 transition-all duration-500" style="width:0%"></div></div>
-            </div>
-        </div>
-
-        <!-- Numbers Grid Input -->
-        <div class="pb-10">
-            <div class="flex justify-between items-end mb-2 mt-4">
-                <h2 class="text-xs text-slate-500 uppercase font-bold tracking-widest">Entrada de Datos</h2>
-                <span class="text-[10px] text-slate-600" id="totalSpins">Tiros: 0</span>
-            </div>
+        <div class="flex-1 overflow-y-auto p-2 scrollbar-hide">
+            <!-- 0 Button -->
+            <button onclick="addNumber(0)" class="num-btn bg-r-green w-full h-10 mb-2 shadow-lg !aspect-auto text-lg">0</button>
             
-            <div class="grid grid-cols-1 mb-1">
-                <button onclick="addNumber(0)" class="num-btn bg-r-green h-8 shadow-lg shadow-green-900/20 !aspect-auto w-full">0</button>
-            </div>
-            <div id="numbersGrid" class="grid grid-cols-9 gap-1"></div>
+            <!-- 1-36 Grid (3 Cols) -->
+            <div id="numbersGrid" class="grid grid-cols-3 gap-2 pb-4"></div>
+        </div>
+
+        <div class="p-2 border-t border-slate-800 text-center bg-slate-900">
+             <span class="text-[10px] text-slate-500 font-mono" id="totalSpins">TIROS: 0</span>
         </div>
     </div>
 
@@ -242,7 +249,7 @@
 
         function updateUI() {
             renderHistory();
-            document.getElementById('totalSpins').innerText = `Tiros: ${history.length}`;
+            document.getElementById('totalSpins').innerText = `TIROS: ${history.length}`;
 
             if (history.length < 5) {
                 document.getElementById('predictionArea').classList.remove('grid');
