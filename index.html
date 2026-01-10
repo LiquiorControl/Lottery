@@ -285,7 +285,7 @@
 
                 <!-- Dozens -->
                 <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3">Docenas</h4>
-                <div class="tracker-grid mb-2">
+                <div class="tracker-grid mb-1"> <!-- Changed mb-2 to mb-1 to fit analysis box -->
                     <div id="track-doz1" class="tracker-cell status-normal">
                         <span class="tracker-label">1ª (1-12)</span>
                         <span id="val-doz1" class="tracker-val">0</span>
@@ -299,10 +299,19 @@
                         <span id="val-doz3" class="tracker-val">0</span>
                     </div>
                 </div>
+                <!-- Analysis Box: Dozens (NEW) -->
+                <div class="tracker-cell bg-slate-800 border border-slate-700 mb-2 py-1">
+                    <span class="tracker-label text-[8px] opacity-70">Max Atrasos (Récord Sesión)</span>
+                    <div class="flex justify-around w-full px-1 mt-0.5">
+                        <span class="text-slate-300 font-bold text-xs">1ª:<span id="max-doz1" class="text-white ml-0.5">0</span></span>
+                        <span class="text-slate-300 font-bold text-xs">2ª:<span id="max-doz2" class="text-white ml-0.5">0</span></span>
+                        <span class="text-slate-300 font-bold text-xs">3ª:<span id="max-doz3" class="text-white ml-0.5">0</span></span>
+                    </div>
+                </div>
 
                 <!-- Columns -->
                 <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3">Columnas</h4>
-                <div class="tracker-grid mb-3">
+                <div class="tracker-grid mb-1"> <!-- Changed mb-3 to mb-1 -->
                     <div id="track-col1" class="tracker-cell status-normal">
                         <span class="tracker-label">Col 1</span>
                         <span id="val-col1" class="tracker-val">0</span>
@@ -314,6 +323,15 @@
                     <div id="track-col3" class="tracker-cell status-normal">
                         <span class="tracker-label">Col 3</span>
                         <span id="val-col3" class="tracker-val">0</span>
+                    </div>
+                </div>
+                <!-- Analysis Box: Columns (NEW) -->
+                <div class="tracker-cell bg-slate-800 border border-slate-700 mb-3 py-1">
+                    <span class="tracker-label text-[8px] opacity-70">Max Atrasos (Récord Sesión)</span>
+                    <div class="flex justify-around w-full px-1 mt-0.5">
+                        <span class="text-slate-300 font-bold text-xs">C1:<span id="max-col1" class="text-white ml-0.5">0</span></span>
+                        <span class="text-slate-300 font-bold text-xs">C2:<span id="max-col2" class="text-white ml-0.5">0</span></span>
+                        <span class="text-slate-300 font-bold text-xs">C3:<span id="max-col3" class="text-white ml-0.5">0</span></span>
                     </div>
                 </div>
 
@@ -591,7 +609,7 @@
         let activeGreen = 0, activeYellow = 0, activeRed = 0, activePurple = 0, activeBlue = 0;
         let totalStats = { green:0, yellow:0, red:0, purple:0, blue:0 };
         // --- Max Gaps Analysis ---
-        let maxStats = { red:0, black:0, even:0, odd:0 };
+        let maxStats = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0 }; // Added keys
 
         function updateDashboard() {
             // 1. Calculate Session Total Stats (Replay History)
@@ -639,11 +657,20 @@
             updateCell('track-col2', 'val-col2', gaps.col2, false);
             updateCell('track-col3', 'val-col3', gaps.col3, false);
 
-            // Update Analysis Max Cells
+            // Update Analysis Max Cells (Simple)
             document.getElementById('max-red').innerText = maxStats.red;
             document.getElementById('max-black').innerText = maxStats.black;
             document.getElementById('max-even').innerText = maxStats.even;
             document.getElementById('max-odd').innerText = maxStats.odd;
+
+            // Update Analysis Max Cells (Zones - NEW)
+            document.getElementById('max-doz1').innerText = maxStats.doz1;
+            document.getElementById('max-doz2').innerText = maxStats.doz2;
+            document.getElementById('max-doz3').innerText = maxStats.doz3;
+            
+            document.getElementById('max-col1').innerText = maxStats.col1;
+            document.getElementById('max-col2').innerText = maxStats.col2;
+            document.getElementById('max-col3').innerText = maxStats.col3;
 
             // Populate Active Detailed Grid (Zones: Doc/Col) - Range 5..20
             const zoneKeys = ['doz1', 'doz2', 'doz3', 'col1', 'col2', 'col3'];
@@ -728,7 +755,7 @@
             detailedStats.forEach(s => s.hits = 0);
             detailedStatsSimple.forEach(s => s.hits = 0);
             totalStats = { green:0, yellow:0, red:0, purple:0, blue:0 };
-            maxStats = { red:0, black:0, even:0, odd:0 };
+            maxStats = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0 }; // Reset all
             
             if (history.length === 0) return;
 
@@ -740,13 +767,13 @@
                 { id: 'even', gap: 0, check: (n) => n % 2 === 0, detail: false, isSimple: true },
                 { id: 'odd', gap: 0, check: (n) => n % 2 !== 0, detail: false, isSimple: true },
                 
-                { id: 'd1', gap: 0, check: (n) => n >= 1 && n <= 12, detail: true, isSimple: false },
-                { id: 'd2', gap: 0, check: (n) => n >= 13 && n <= 24, detail: true, isSimple: false },
-                { id: 'd3', gap: 0, check: (n) => n >= 25 && n <= 36, detail: true, isSimple: false },
+                { id: 'doz1', gap: 0, check: (n) => n >= 1 && n <= 12, detail: true, isSimple: false }, // Fixed IDs to match maxStats keys
+                { id: 'doz2', gap: 0, check: (n) => n >= 13 && n <= 24, detail: true, isSimple: false },
+                { id: 'doz3', gap: 0, check: (n) => n >= 25 && n <= 36, detail: true, isSimple: false },
                 
-                { id: 'c1', gap: 0, check: (n) => COL_1.includes(n), detail: true, isSimple: false },
-                { id: 'c2', gap: 0, check: (n) => COL_2.includes(n), detail: true, isSimple: false },
-                { id: 'c3', gap: 0, check: (n) => COL_3.includes(n), detail: true, isSimple: false }
+                { id: 'col1', gap: 0, check: (n) => COL_1.includes(n), detail: true, isSimple: false },
+                { id: 'col2', gap: 0, check: (n) => COL_2.includes(n), detail: true, isSimple: false },
+                { id: 'col3', gap: 0, check: (n) => COL_3.includes(n), detail: true, isSimple: false }
             ];
 
             // Replay old -> new
@@ -757,10 +784,8 @@
 
                 trackers.forEach(t => {
                     if (t.check(num)) {
-                        // Max Stats check (on hit)
-                        if (['red', 'black', 'even', 'odd'].includes(t.id)) {
-                            if (t.gap > maxStats[t.id]) maxStats[t.id] = t.gap;
-                        }
+                        // Max Stats check (on hit) - Now works for ALL IDs
+                        if (t.gap > maxStats[t.id]) maxStats[t.id] = t.gap;
 
                         // Summary Stats Accumulation
                         if (t.isSimple) {
@@ -798,10 +823,8 @@
                     } else {
                         t.gap++; // Miss
                         
-                        // Check Max Stats on miss (updates running max)
-                        if (['red', 'black', 'even', 'odd'].includes(t.id)) {
-                            if (t.gap > maxStats[t.id]) maxStats[t.id] = t.gap;
-                        }
+                        // Check Max Stats on miss (updates running max) - Now works for ALL IDs
+                        if (t.gap > maxStats[t.id]) maxStats[t.id] = t.gap;
                         
                         // Summary Stats (Total Reached Thresholds)
                         if (t.isSimple) {
