@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Master AI + OCR + Bulk</title>
+    <title>Roulette Master AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
@@ -100,7 +99,6 @@
         .status-red { background-color: #7f1d1d; color: #fecaca; border-color: #ef4444; animation: pulse-red 2s infinite; }
         .status-yellow { background-color: #713f12; color: #fef08a; border-color: #eab308; }
         .status-green { background-color: #14532d; color: #bbf7d0; border-color: #22c55e; animation: pulse-green 2s infinite; }
-        /* NEW BLUE STATUS */
         .status-blue { background-color: #1e3a8a; color: #bfdbfe; border-color: #3b82f6; animation: pulse-blue 1.5s infinite; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
 
         @keyframes pulse-red {
@@ -126,6 +124,38 @@
             50% { opacity: .7; }
         }
         
+        /* NEW DETAILED GRID */
+        .alert-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-top: 5px;
+        }
+        /* Custom grid for 1-10 (5 columns x 2 rows) */
+        .alert-grid-10 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            margin-top: 5px;
+        }
+
+        .alert-cell {
+            padding: 3px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .alert-cell b { font-size: 0.8rem; display: block; }
+        .alert-stats { font-size: 0.6rem; display: flex; justify-content: space-between; padding: 0 1px; opacity: 0.8; }
+        
+        .cell-base { background: rgba(51, 65, 85, 0.4); color: #cbd5e1; border-color: #475569; }
+        .cell-purple { background: rgba(88, 28, 135, 0.4); color: #e9d5ff; border-color: #a855f7; }
+        .cell-red { background: rgba(127, 29, 29, 0.4); color: #fecaca; border-color: #ef4444; }
+        .cell-yellow { background: rgba(113, 63, 18, 0.4); color: #fef08a; border-color: #eab308; }
+        .cell-green { background: rgba(20, 83, 45, 0.4); color: #bbf7d0; border-color: #22c55e; }
+        .cell-blue { background: rgba(30, 58, 138, 0.4); color: #bfdbfe; border-color: #3b82f6; }
+        
         .summary-badge {
             display: flex;
             align-items: center;
@@ -136,30 +166,9 @@
             font-weight: bold;
             margin-bottom: 4px;
         }
-
-        /* Scan Overlay */
-        #scanOverlay {
-            background: rgba(0,0,0,0.9);
-            z-index: 100;
-        }
-        .scan-line {
-            width: 100%;
-            height: 2px;
-            background: #22c55e;
-            box-shadow: 0 0 10px #22c55e;
-            animation: scanMove 2s infinite linear;
-        }
-        @keyframes scanMove {
-            0% { transform: translateY(-100px); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateY(100px); opacity: 0; }
-        }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden bg-slate-950">
-
-    <!-- HIDDEN INPUT FOR CAMERA -->
-    <input type="file" id="cameraInput" accept="image/*" style="display:none" onchange="processImage(this)">
 
     <!-- TEXT IMPORT MODAL -->
     <div id="textModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
@@ -179,17 +188,6 @@
         </div>
     </div>
 
-    <!-- SCAN LOADING OVERLAY -->
-    <div id="scanOverlay" class="hidden fixed inset-0 flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-16 h-16 border-2 border-green-500 rounded-lg relative overflow-hidden mb-4 flex items-center justify-center">
-            <i class="fas fa-camera text-2xl text-green-500"></i>
-            <div class="absolute top-0 left-0 right-0 scan-line"></div>
-        </div>
-        <h3 class="text-xl font-bold text-white mb-2">Analizando imagen...</h3>
-        <p class="text-slate-400 text-sm mb-4">Estamos extrayendo los números. Por favor espera.</p>
-        <p id="scanStatus" class="text-xs text-slate-500 font-mono">Iniciando motor OCR...</p>
-    </div>
-
     <!-- LEFT PANEL: Dashboard -->
     <div class="flex-1 flex flex-col h-full overflow-hidden">
         <!-- Scrollable Container -->
@@ -204,10 +202,6 @@
                     <!-- TEXT IMPORT BUTTON -->
                     <button onclick="openTextModal()" class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-500 transition shadow-lg shadow-blue-900/50 flex items-center gap-1">
                         <i class="fas fa-edit"></i> TEXTO
-                    </button>
-                    <!-- CAMERA BUTTON -->
-                    <button onclick="document.getElementById('cameraInput').click()" class="px-3 py-1 bg-indigo-600 text-white rounded text-[10px] hover:bg-indigo-500 transition shadow-lg shadow-indigo-900/50 flex items-center gap-1">
-                        <i class="fas fa-camera"></i> FOTO
                     </button>
                     <button onclick="undoLast()" class="px-3 py-1 bg-slate-800 rounded text-[10px] hover:bg-slate-700 transition border border-slate-700">
                         <i class="fas fa-undo"></i>
@@ -248,7 +242,7 @@
             <div id="trackerDashboard">
                 <h3 class="text-[10px] text-slate-500 uppercase font-bold mb-1 tracking-widest pl-1">Probabilidades en Vivo (Atrasos)</h3>
                 
-                <!-- Simple Chances -->
+                <!-- Simple Chances with Max Analysis -->
                 <div class="tracker-grid mb-2">
                     <div id="track-red" class="tracker-cell status-normal">
                         <span class="tracker-label">Rojo</span>
@@ -260,8 +254,13 @@
                         <span id="val-black" class="tracker-val">0</span>
                         <span class="tracker-sub">Giros sin salir</span>
                     </div>
-                    <div class="tracker-cell bg-slate-900 border-none opacity-50 flex items-center justify-center">
-                        <span class="text-[10px]">Simple</span>
+                    <!-- Analysis Box: Simple -->
+                    <div class="tracker-cell bg-slate-800 border border-slate-700">
+                        <span class="tracker-label text-[8px] opacity-70">Max Atrasos</span>
+                        <div class="flex justify-between w-full px-1 mt-1">
+                            <span class="text-red-400 font-bold text-xs">R:<span id="max-red" class="text-white ml-0.5">0</span></span>
+                            <span class="text-slate-400 font-bold text-xs">N:<span id="max-black" class="text-white ml-0.5">0</span></span>
+                        </div>
                     </div>
 
                     <div id="track-even" class="tracker-cell status-normal">
@@ -274,8 +273,13 @@
                         <span id="val-odd" class="tracker-val">0</span>
                         <span class="tracker-sub">Giros sin salir</span>
                     </div>
-                    <div class="tracker-cell bg-slate-900 border-none opacity-50 flex items-center justify-center">
-                        <span class="text-[10px]">Paridad</span>
+                    <!-- Analysis Box: Parity -->
+                    <div class="tracker-cell bg-slate-800 border border-slate-700">
+                        <span class="tracker-label text-[8px] opacity-70">Max Atrasos</span>
+                        <div class="flex justify-between w-full px-1 mt-1">
+                            <span class="text-blue-400 font-bold text-xs">P:<span id="max-even" class="text-white ml-0.5">0</span></span>
+                            <span class="text-yellow-500 font-bold text-xs">I:<span id="max-odd" class="text-white ml-0.5">0</span></span>
+                        </div>
                     </div>
                 </div>
 
@@ -311,6 +315,26 @@
                         <span class="tracker-label">Col 3</span>
                         <span id="val-col3" class="tracker-val">0</span>
                     </div>
+                </div>
+
+                <!-- DETAILED ALERTS GRID 5+ TO 20+ (ZONES) -->
+                <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3 font-bold border-t border-slate-800 pt-2">Detalle Atrasos (Doc/Col 5+ a 20+)</h4>
+                <div class="alert-grid" id="detailedAlerts">
+                    <!-- JS will populate -->
+                </div>
+                <div class="flex justify-between text-[9px] text-slate-500 mt-1 px-1">
+                    <span>A: Activas (Racha Actual)</span>
+                    <span>S: Salidas (Racha Rota)</span>
+                </div>
+
+                <!-- DETAILED ALERTS GRID 1 TO 10+ (SIMPLE) -->
+                <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3 font-bold border-t border-slate-800 pt-2">Detalle Atrasos (Color/Par 1+ a 10+)</h4>
+                <div class="alert-grid-10" id="detailedAlertsSimple">
+                    <!-- JS will populate -->
+                </div>
+                <div class="flex justify-between text-[9px] text-slate-500 mt-1 px-1">
+                    <span>A: Activas</span>
+                    <span>S: Salidas</span>
                 </div>
 
                 <!-- Alerts Summary -->
@@ -496,55 +520,6 @@
             });
         }
 
-        // --- IMAGE OCR PROCESSING ---
-        function processImage(input) {
-            if (!input.files || !input.files[0]) return;
-            const file = input.files[0];
-            
-            // Show Overlay
-            const overlay = document.getElementById('scanOverlay');
-            const status = document.getElementById('scanStatus');
-            overlay.classList.remove('hidden');
-            status.innerText = "Inicializando Tesseract...";
-
-            Tesseract.recognize(
-                file,
-                'eng',
-                {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            status.innerText = `Leyendo números: ${Math.round(m.progress * 100)}%`;
-                        } else {
-                            status.innerText = m.status;
-                        }
-                    }
-                }
-            ).then(({ data: { text } }) => {
-                const foundNumbers = text.match(/\b([0-9]|[1-2][0-9]|3[0-6])\b/g);
-                
-                if (foundNumbers && foundNumbers.length > 0) {
-                    let addedCount = 0;
-                    foundNumbers.reverse().forEach(n => {
-                        let val = parseInt(n);
-                        if (!isNaN(val) && val >= 0 && val <= 36) {
-                            addNumber(val);
-                            addedCount++;
-                        }
-                    });
-                    alert(`¡Escaneo completo! Se detectaron y agregaron ${addedCount} números.`);
-                } else {
-                    alert("No se detectaron números claros (0-36). Intenta con una imagen más nítida.");
-                }
-            }).catch(err => {
-                console.error(err);
-                alert("Error al procesar la imagen.");
-            }).finally(() => {
-                overlay.classList.add('hidden');
-                input.value = ''; // reset input
-            });
-        }
-
-
         function calculatePredictions() {
             if (history.length < 3) {
                 updatePredictionBox('predHot', '-');
@@ -605,17 +580,27 @@
             else el.classList.add('text-slate-200');
         }
 
-        // --- Alert Counts ---
-        // Current active alerts
+        // --- Alert Detailed Stats ---
+        // Array 0..20 (indices) to store hits (Salidas) and active counts per gap number
+        // Zone (Doc/Col) - Use up to 20
+        let detailedStats = Array.from({length: 22}, () => ({ active: 0, hits: 0 }));
+        // Simple (Color/Par) - Use up to 10
+        let detailedStatsSimple = Array.from({length: 22}, () => ({ active: 0, hits: 0 }));
+        
+        // --- Alert Counts (Summary) ---
         let activeGreen = 0, activeYellow = 0, activeRed = 0, activePurple = 0, activeBlue = 0;
-        // Total Session stats
         let totalStats = { green:0, yellow:0, red:0, purple:0, blue:0 };
+        // --- Max Gaps Analysis ---
+        let maxStats = { red:0, black:0, even:0, odd:0 };
 
         function updateDashboard() {
             // 1. Calculate Session Total Stats (Replay History)
             calculateSessionStats();
 
-            // 2. Calculate Current Stats (Active)
+            // 2. Calculate Active Stats
+            // Reset active counts
+            detailedStats.forEach(s => s.active = 0);
+            detailedStatsSimple.forEach(s => s.active = 0);
             activeGreen = 0; activeYellow = 0; activeRed = 0; activePurple = 0; activeBlue = 0;
 
             function getGap(checkFn) {
@@ -640,22 +625,50 @@
                 col3: getGap(n => COL_3.includes(n))
             };
 
-            // Update DOM & Colors
+            // Update main dashboard numbers & colors
             updateCell('track-red', 'val-red', gaps.red);
             updateCell('track-black', 'val-black', gaps.black);
-            
             updateCell('track-even', 'val-even', gaps.even);
             updateCell('track-odd', 'val-odd', gaps.odd);
-            
             updateCell('track-doz1', 'val-doz1', gaps.doz1);
             updateCell('track-doz2', 'val-doz2', gaps.doz2);
             updateCell('track-doz3', 'val-doz3', gaps.doz3);
-            
             updateCell('track-col1', 'val-col1', gaps.col1);
             updateCell('track-col2', 'val-col2', gaps.col2);
             updateCell('track-col3', 'val-col3', gaps.col3);
 
-            // Update Summary (Active vs Historical)
+            // Update Analysis Max Cells
+            document.getElementById('max-red').innerText = maxStats.red;
+            document.getElementById('max-black').innerText = maxStats.black;
+            document.getElementById('max-even').innerText = maxStats.even;
+            document.getElementById('max-odd').innerText = maxStats.odd;
+
+            // Populate Active Detailed Grid (Zones: Doc/Col) - Range 5..20
+            const zoneKeys = ['doz1', 'doz2', 'doz3', 'col1', 'col2', 'col3'];
+            zoneKeys.forEach(key => {
+                const g = gaps[key];
+                if (g >= 5) {
+                    let limit = Math.min(g, 20);
+                    for(let i = 5; i <= limit; i++) detailedStats[i].active++;
+                }
+            });
+
+            // Populate Active Detailed Grid (Simple: Color/Par) - Range 1..10
+            const simpleKeys = ['red', 'black', 'even', 'odd'];
+            simpleKeys.forEach(key => {
+                const g = gaps[key];
+                if (g >= 1) { // Changed to >= 1
+                    let limit = Math.min(g, 10); // Cap at 10
+                    for(let i = 1; i <= limit; i++) detailedStatsSimple[i].active++;
+                }
+            });
+
+            // 3. Render Detailed Grid (Zone 5-20)
+            renderDetailedGrid('detailedAlerts', detailedStats, 5, 20);
+            // 4. Render Detailed Grid (Simple 1-10)
+            renderDetailedGrid('detailedAlertsSimple', detailedStatsSimple, 1, 10);
+
+            // 5. Update Summary Badges
             document.getElementById('count-blue').innerText = activeBlue;
             document.getElementById('hist-blue').innerText = totalStats.blue;
 
@@ -672,38 +685,102 @@
             document.getElementById('hist-purple').innerText = totalStats.purple;
         }
 
+        function renderDetailedGrid(containerId, statsArray, start, end) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for(let i=start; i<=end; i++) {
+                const s = statsArray[i];
+                let colorClass = 'cell-base'; // 1-4 Default
+                
+                if(i >= 5) colorClass = 'cell-purple';
+                if(i >= 7) colorClass = 'cell-red';
+                if(i >= 10) colorClass = 'cell-yellow';
+                if(i >= 15) colorClass = 'cell-green';
+                if(i >= 20) colorClass = 'cell-blue';
+
+                const div = document.createElement('div');
+                div.className = `alert-cell ${colorClass}`;
+                div.innerHTML = `
+                    <b>${i}${i===end?'+':''}</b>
+                    <div class="alert-stats">
+                        <span>A:${s.active}</span>
+                        <span>S:${s.hits}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+        }
+
         function calculateSessionStats() {
-            // Replay history from Oldest to Newest to count all alerts triggered
+            // Replay history to count Hits (Salidas)
+            detailedStats.forEach(s => s.hits = 0);
+            detailedStatsSimple.forEach(s => s.hits = 0);
             totalStats = { green:0, yellow:0, red:0, purple:0, blue:0 };
+            maxStats = { red:0, black:0, even:0, odd:0 };
             
             if (history.length === 0) return;
 
-            // Trackers configuration for replay
             const trackers = [
-                { id: 'red', gap: 0, check: (n) => RED_NUMBERS.includes(n) },
-                { id: 'black', gap: 0, check: (n) => !RED_NUMBERS.includes(n) },
-                { id: 'even', gap: 0, check: (n) => n % 2 === 0 },
-                { id: 'odd', gap: 0, check: (n) => n % 2 !== 0 },
-                { id: 'd1', gap: 0, check: (n) => n >= 1 && n <= 12 },
-                { id: 'd2', gap: 0, check: (n) => n >= 13 && n <= 24 },
-                { id: 'd3', gap: 0, check: (n) => n >= 25 && n <= 36 },
-                { id: 'c1', gap: 0, check: (n) => COL_1.includes(n) },
-                { id: 'c2', gap: 0, check: (n) => COL_2.includes(n) },
-                { id: 'c3', gap: 0, check: (n) => COL_3.includes(n) }
+                // detail: false for simple, true for dozens/cols
+                { id: 'red', gap: 0, check: (n) => RED_NUMBERS.includes(n), detail: false },
+                { id: 'black', gap: 0, check: (n) => !RED_NUMBERS.includes(n), detail: false },
+                { id: 'even', gap: 0, check: (n) => n % 2 === 0, detail: false },
+                { id: 'odd', gap: 0, check: (n) => n % 2 !== 0, detail: false },
+                
+                { id: 'd1', gap: 0, check: (n) => n >= 1 && n <= 12, detail: true },
+                { id: 'd2', gap: 0, check: (n) => n >= 13 && n <= 24, detail: true },
+                { id: 'd3', gap: 0, check: (n) => n >= 25 && n <= 36, detail: true },
+                
+                { id: 'c1', gap: 0, check: (n) => COL_1.includes(n), detail: true },
+                { id: 'c2', gap: 0, check: (n) => COL_2.includes(n), detail: true },
+                { id: 'c3', gap: 0, check: (n) => COL_3.includes(n), detail: true }
             ];
 
-            // Replay
+            // Replay old -> new
             const reversedHistory = history.slice().reverse();
             
             reversedHistory.forEach(num => {
-                if (num === 0) return; // Skip 0 for gap logic generally in this simplified model
+                if (num === 0) return; // Skip 0
 
                 trackers.forEach(t => {
                     if (t.check(num)) {
-                        t.gap = 0; // Hit, reset gap
+                        // Max Stats check (on hit)
+                        if (['red', 'black', 'even', 'odd'].includes(t.id)) {
+                            if (t.gap > maxStats[t.id]) maxStats[t.id] = t.gap;
+                        }
+
+                        // Summary Stats Accumulation
+                        if (t.gap >= 5 && t.gap < 7) totalStats.purple++;
+                        if (t.gap >= 7 && t.gap < 10) totalStats.red++;
+                        if (t.gap >= 10 && t.gap < 15) totalStats.yellow++;
+                        if (t.gap >= 15 && t.gap < 20) totalStats.green++;
+                        if (t.gap >= 20) totalStats.blue++;
+
+                        // Detailed Grid Stats (Hits)
+                        if (t.detail) {
+                            // Doc/Col: 5+ logic
+                            if (t.gap >= 5) {
+                                let idx = Math.min(t.gap, 20);
+                                detailedStats[idx].hits++; 
+                            }
+                        } else {
+                            // Simple: 1+ logic
+                            if (t.gap >= 1) {
+                                let idx = Math.min(t.gap, 10);
+                                detailedStatsSimple[idx].hits++;
+                            }
+                        }
+                        
+                        t.gap = 0; // Reset
                     } else {
-                        t.gap++; // Miss, increase gap
-                        // Check if it hit a threshold exactly on this spin
+                        t.gap++; // Miss
+                        
+                        // Check Max Stats on miss (updates running max)
+                        if (['red', 'black', 'even', 'odd'].includes(t.id)) {
+                            if (t.gap > maxStats[t.id]) maxStats[t.id] = t.gap;
+                        }
+                        
+                        // Summary Stats (Total Reached Thresholds - Keep this cumulative)
                         if (t.gap === 5) totalStats.purple++;
                         if (t.gap === 7) totalStats.red++;
                         if (t.gap === 10) totalStats.yellow++;
@@ -723,7 +800,7 @@
             // Reset classes
             card.className = "tracker-cell";
             
-            // ALERT LOGIC HIERARCHY (Updated with Blue)
+            // ALERT LOGIC HIERARCHY
             if (gap >= 20) {
                 card.classList.add('status-blue');
                 activeBlue++;
