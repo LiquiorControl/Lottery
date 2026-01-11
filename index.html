@@ -6,6 +6,13 @@
     <title>Roulette Master AI - Smart Strategy</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        // Detector de Errores Global
+        window.onerror = function(msg, url, line, col, error) {
+            alert("⚠️ Error detectado: " + msg + "\nLínea: " + line + "\n\nPor favor, intenta reiniciar la página.");
+            return false;
+        };
+    </script>
     <style>
         body {
             background-color: #0f172a;
@@ -176,9 +183,14 @@
             
             <!-- Header -->
             <div class="flex justify-between items-center mb-1 bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                <h1 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center">
-                    <i class="fas fa-chart-line mr-2"></i>Monitor
-                </h1>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center">
+                        <i class="fas fa-chart-line mr-2"></i>Monitor
+                    </h1>
+                    <button id="timerBtn" onclick="toggleTimer()" class="text-[10px] font-mono font-bold text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-700 hover:text-white transition flex items-center cursor-pointer">
+                        <i class="far fa-clock mr-1"></i><span id="timeDisplay">60:00</span>
+                    </button>
+                </div>
                 <div class="flex gap-2">
                     <!-- TEXT IMPORT BUTTON -->
                     <button onclick="openTextModal()" class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-500 transition shadow-lg shadow-blue-900/50 flex items-center gap-1">
@@ -452,8 +464,12 @@
         let history = [];
         
         window.onload = function() {
-            renderGrid();
-            loadState();
+            try {
+                renderGrid();
+                loadState();
+            } catch(e) {
+                console.error("Error inicial:", e);
+            }
         };
 
         function renderGrid() {
@@ -645,15 +661,8 @@
                 zero: getGap(n => ZERO_GAME.includes(n))
             };
 
-            // ---- LOGIC: CROSS BET CHECK (UPDATED) ----
+            // ---- LOGIC: CROSS BET CHECK (STRICT ZONE CROSS) ----
             
-            // 1. Contar Alertas Simples (Color/Par >= 3)
-            let simpleAlertCount = 0;
-            if(gaps.red >= 3) simpleAlertCount++;
-            if(gaps.black >= 3) simpleAlertCount++;
-            if(gaps.even >= 3) simpleAlertCount++;
-            if(gaps.odd >= 3) simpleAlertCount++;
-
             // 2. Contar Alertas de Zona (Doc/Col >= 5)
             let zoneAlertCount = 0;
             if(gaps.doz1 >= 5) zoneAlertCount++;
@@ -664,15 +673,14 @@
             if(gaps.col3 >= 5) zoneAlertCount++;
             
             // Condición de Activación de Apuesta en Zonas:
-            // A) Cruce de Zonas: 2 o más zonas están atrasadas (5+)
-            // B) Cruce Mixto: Al menos 1 Zona (5+) Y 1 Simple (3+)
-            const isZoneBetActive = (zoneAlertCount >= 2) || (zoneAlertCount >= 1 && simpleAlertCount >= 1);
+            // Cruce de Zonas: 2 o más zonas están atrasadas (5+)
+            // SOLO ESTO activa sugerencias en Zonas
+            const isZoneBetActive = zoneAlertCount >= 2;
             
             // Update UI Status Bar
             const statusDiv = document.getElementById('crossBetStatus');
             if (isZoneBetActive) {
                 statusDiv.classList.remove('hidden');
-                // Optional: Change text based on type of cross? Keep simple for now.
             } else {
                 statusDiv.classList.add('hidden');
             }
@@ -835,7 +843,7 @@
             });
         }
 
-        // Logic 1: SIMPLE CHANCES (Strict: Red @ 3, Bet @ 3)
+        // Logic 1: SIMPLE CHANCES (Strict: Red at 3, Bet at 3)
         function updateCellSimple(cardId, valId, gap) {
             const card = document.getElementById(cardId);
             const val = document.getElementById(valId);
@@ -861,7 +869,7 @@
             else card.classList.add('status-normal');
         }
 
-        // Logic 2: ZONES (Cross: Red @ 5, Bet @ 5 IF cross active)
+        // Logic 2: ZONES (Cross: Red at 5, Bet at 5 IF cross active)
         function updateCellZone(cardId, valId, gap, allowBetting) {
             const card = document.getElementById(cardId);
             const val = document.getElementById(valId);
@@ -906,10 +914,69 @@
             else card.classList.add('status-normal');
         }
 
-        function saveState() { localStorage.setItem('roulette_ai_history', JSON.stringify(history)); }
+        // --- TIMER LOGIC ---
+        let timerInterval;
+        let timeLeft = 3600; // 60 minutes
+        let isTimerRunning = false;
+
+        function toggleTimer() {
+            const btn = document.getElementById('timerBtn');
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                btn.classList.remove('text-yellow-400', 'border-yellow-600');
+                btn.classList.add('text-slate-400', 'border-slate-700');
+            } else {
+                if (timeLeft <= 0) timeLeft = 3600;
+                isTimerRunning = true;
+                btn.classList.remove('text-slate-400', 'border-slate-700');
+                btn.classList.add('text-yellow-400', 'border-yellow-600');
+                
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        btn.classList.remove('text-yellow-400', 'border-yellow-600');
+                        btn.classList.add('text-red-500', 'border-red-500');
+                        alert("¡Tiempo de sesión finalizado!");
+                    }
+                }, 1000);
+            }
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timeDisplay').innerText = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('roulette_ai_history', JSON.stringify(history));
+            } catch(e) {
+                console.error("Error guardando:", e);
+            }
+        }
+
         function loadState() {
-            const saved = localStorage.getItem('roulette_ai_history');
-            if (saved) { history = JSON.parse(saved); updateUI(); }
+            try {
+                const saved = localStorage.getItem('roulette_ai_history');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed)) {
+                        history = parsed;
+                        updateUI();
+                    }
+                }
+            } catch(e) {
+                console.error("Error cargando:", e);
+                // Si falla, reiniciamos historial para evitar bloqueo
+                history = [];
+                saveState();
+            }
         }
     </script>
 </body>
