@@ -7,9 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
-        // Detector de Errores Global
         window.onerror = function(msg, url, line, col, error) {
-            alert("⚠️ Error detectado: " + msg + "\nLínea: " + line + "\n\nPor favor, intenta reiniciar la página.");
+            // Suppress error alerts in production, log to console
+            console.error("Error: " + msg);
             return false;
         };
     </script>
@@ -183,12 +183,12 @@
             
             <!-- Header -->
             <div class="flex justify-between items-center mb-1 bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <h1 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center">
                         <i class="fas fa-chart-line mr-2"></i>Monitor
                     </h1>
-                    <button id="timerBtn" onclick="toggleTimer()" class="text-[10px] font-mono font-bold text-slate-400 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-700 hover:text-white transition flex items-center cursor-pointer">
-                        <i class="far fa-clock mr-1"></i><span id="timeDisplay">60:00</span>
+                    <button id="timerBtn" onclick="toggleTimer()" class="text-lg font-mono font-bold text-slate-400 bg-slate-900/50 px-3 py-1 rounded-md border border-slate-700 hover:text-white transition flex items-center cursor-pointer ml-2 shadow-inner">
+                        <i class="far fa-clock mr-2 text-sm"></i><span id="timeDisplay">60:00</span>
                     </button>
                 </div>
                 <div class="flex gap-2">
@@ -639,6 +639,7 @@
             function getGap(checkFn) {
                 if (history.length === 0) return 0;
                 for(let i=0; i<history.length; i++) {
+                    // Corrected: 0 counts as valid gap/miss for outside bets
                     if (checkFn(history[i])) return i;
                 }
                 return history.length;
@@ -646,9 +647,9 @@
 
             const gaps = {
                 red: getGap(n => RED_NUMBERS.includes(n)),
-                black: getGap(n => !RED_NUMBERS.includes(n)),
-                even: getGap(n => n % 2 === 0),
-                odd: getGap(n => n % 2 !== 0),
+                black: getGap(n => !RED_NUMBERS.includes(n) && n !== 0), // 0 is miss for Black
+                even: getGap(n => n !== 0 && n % 2 === 0), // 0 is miss for Even
+                odd: getGap(n => n !== 0 && n % 2 !== 0), 
                 doz1: getGap(n => n >= 1 && n <= 12),
                 doz2: getGap(n => n >= 13 && n <= 24),
                 doz3: getGap(n => n >= 25 && n <= 36),
@@ -794,9 +795,9 @@
 
             const trackers = [
                 { id: 'red', gap: 0, check: (n) => RED_NUMBERS.includes(n), detail: false, isSimple: true },
-                { id: 'black', gap: 0, check: (n) => !RED_NUMBERS.includes(n), detail: false, isSimple: true },
-                { id: 'even', gap: 0, check: (n) => n % 2 === 0, detail: false, isSimple: true },
-                { id: 'odd', gap: 0, check: (n) => n % 2 !== 0, detail: false, isSimple: true },
+                { id: 'black', gap: 0, check: (n) => !RED_NUMBERS.includes(n) && n !== 0, detail: false, isSimple: true },
+                { id: 'even', gap: 0, check: (n) => n !== 0 && n % 2 === 0, detail: false, isSimple: true },
+                { id: 'odd', gap: 0, check: (n) => n !== 0 && n % 2 !== 0, detail: false, isSimple: true },
                 
                 { id: 'doz1', gap: 0, check: (n) => n >= 1 && n <= 12, detail: true, isSimple: false },
                 { id: 'doz2', gap: 0, check: (n) => n >= 13 && n <= 24, detail: true, isSimple: false },
@@ -909,8 +910,7 @@
             if (gap >= 20) card.classList.add('status-blue');
             else if (gap >= 15) card.classList.add('status-green');
             else if (gap >= 10) card.classList.add('status-yellow');
-            else if (gap >= 5) card.classList.add('status-red'); // Default red at 5 for visual consistency? Or keep original?
-            // Let's keep consistency with Zones: Red at 5.
+            else if (gap >= 5) card.classList.add('status-red'); 
             else card.classList.add('status-normal');
         }
 
@@ -953,30 +953,10 @@
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
 
-        function saveState() {
-            try {
-                localStorage.setItem('roulette_ai_history', JSON.stringify(history));
-            } catch(e) {
-                console.error("Error guardando:", e);
-            }
-        }
-
+        function saveState() { localStorage.setItem('roulette_ai_history', JSON.stringify(history)); }
         function loadState() {
-            try {
-                const saved = localStorage.getItem('roulette_ai_history');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed)) {
-                        history = parsed;
-                        updateUI();
-                    }
-                }
-            } catch(e) {
-                console.error("Error cargando:", e);
-                // Si falla, reiniciamos historial para evitar bloqueo
-                history = [];
-                saveState();
-            }
+            const saved = localStorage.getItem('roulette_ai_history');
+            if (saved) { history = JSON.parse(saved); updateUI(); }
         }
     </script>
 </body>
