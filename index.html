@@ -3,445 +3,454 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Master AI - Smart Strategy</title>
+    <title>Roulette Royale AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        window.onerror = function(msg, url, line, col, error) {
-            // Suppress error alerts in production, log to console
-            console.error("Error: " + msg);
-            return false;
-        };
-    </script>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --gold-light: #FDE047;
+            --gold: #D4AF37;
+            --gold-dark: #896312;
+            --glass-bg: rgba(20, 20, 30, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --neon-blue: #3b82f6;
+            --neon-red: #ef4444;
+            --neon-green: #22c55e;
+        }
+
         body {
-            background-color: #0f172a;
+            background: radial-gradient(circle at top right, #1e293b 0%, #000000 100%);
             color: #e2e8f0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Montserrat', sans-serif;
             touch-action: manipulation;
         }
-        
+
+        /* PREMIUM SCROLLBAR */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        /* GLASSMORPHISM CARDS */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* TEXTURE OVERLAY */
+        .noise-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* GLOSSY BUTTONS */
         .num-btn {
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.5);
-            border: none;
-            transition: transform 0.05s;
-        }
-
-        .num-btn:active { transform: scale(0.95); opacity: 0.9; }
-
-        .bg-r-red { background: linear-gradient(145deg, #ef4444, #b91c1c); color: white; }
-        .bg-r-black { background: linear-gradient(145deg, #374151, #111827); color: white; border: 1px solid #4b5563; }
-        .bg-r-green { background: linear-gradient(145deg, #22c55e, #15803d); color: white; }
-
-        .stat-card {
-            background-color: #1e293b;
+            font-weight: 900;
+            font-size: 0.95rem;
             border-radius: 8px;
-            padding: 8px;
-            border: 1px solid #334155;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        /* Prediction Boxes */
-        .prediction-box {
-            background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
-            border: 1px solid #4338ca;
+            border: 1px solid rgba(255,255,255,0.1);
             position: relative;
             overflow: hidden;
-            border-radius: 8px;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+        
+        .num-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 40%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .num-btn:active { transform: scale(0.94); box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        .bg-r-red { background: linear-gradient(135deg, #b91c1c, #7f1d1d); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border-bottom: 2px solid #450a0a; }
+        .bg-r-black { background: linear-gradient(135deg, #374151, #111827); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border-bottom: 2px solid #000; }
+        .bg-r-green { background: linear-gradient(135deg, #15803d, #14532d); color: #86efac; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border-bottom: 2px solid #052e16; }
+
+        /* PREDICTION BOXES */
+        .prediction-box {
+            background: linear-gradient(160deg, #1e1b4b 0%, #0f172a 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         .prediction-number {
-            font-size: 1.8rem;
-            font-weight: 800;
-            text-shadow: 0 0 10px rgba(255,255,255,0.3);
-            line-height: 1.2;
+            font-size: 2rem;
+            font-weight: 900;
+            background: -webkit-linear-gradient(#fff, #94a3b8);
+            -webkit-background-clip: text;
+            text-shadow: 0 0 15px rgba(255,255,255,0.1);
+            line-height: 1.1;
         }
 
+        /* HISTORY BADGES */
         .history-badge {
-            min-width: 32px;
-            height: 32px;
+            min-width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 0.8rem;
-            margin-right: 4px;
-            border: 2px solid rgba(255,255,255,0.1);
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-right: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* DASHBOARD GRID STYLES */
-        .tracker-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-        
-        .tracker-grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
-        }
+        /* TRACKER GRID */
+        .tracker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 
         .tracker-cell {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 6px 4px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
+            justify-content: space-between;
+            padding: 8px 6px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(30, 41, 59, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 75px;
             position: relative;
         }
 
-        .tracker-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; opacity: 0.8; }
-        .tracker-val { font-size: 1rem; font-weight: 800; }
-        .tracker-sub { font-size: 0.6rem; opacity: 0.6; min-height: 1rem;}
-
-        /* HEATMAP COLORS */
-        .status-normal { background-color: #1e293b; color: #94a3b8; }
-        .status-purple { background-color: #581c87; color: #e9d5ff; border-color: #a855f7; }
-        .status-red { background-color: #7f1d1d; color: #fecaca; border-color: #ef4444; animation: pulse-red 2s infinite; }
-        .status-yellow { background-color: #713f12; color: #fef08a; border-color: #eab308; }
-        .status-green { background-color: #14532d; color: #bbf7d0; border-color: #22c55e; animation: pulse-green 2s infinite; }
-        .status-blue { background-color: #1e3a8a; color: #bfdbfe; border-color: #3b82f6; animation: pulse-blue 1.5s infinite; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
-
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-        @keyframes pulse-blue {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); border-color: #60a5fa; }
-            50% { box-shadow: 0 0 10px 4px rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
-            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); border-color: #60a5fa; }
+        .leader-badge {
+            position: absolute;
+            top: -6px; right: -6px;
+            font-size: 0.8rem;
+            background: var(--gold);
+            color: black;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 10px var(--gold);
+            animation: pulse-gold 2s infinite;
+            z-index: 10;
         }
 
-        /* NEW DETAILED GRID */
-        .alert-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 5px; }
-        .alert-grid-10 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 5px; }
+        @keyframes pulse-gold { 0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(212, 175, 55, 0); } 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); } }
 
-        .alert-cell {
-            padding: 3px; border-radius: 4px; font-size: 0.65rem; text-align: center;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .alert-cell b { font-size: 0.8rem; display: block; }
-        .alert-stats { font-size: 0.6rem; display: flex; justify-content: space-between; padding: 0 1px; opacity: 0.8; }
+        .tracker-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: #94a3b8; margin-bottom: 2px; }
+        .tracker-val { font-size: 1.5rem; font-weight: 900; line-height: 1; color: white; }
         
-        .cell-base { background: rgba(51, 65, 85, 0.4); color: #cbd5e1; border-color: #475569; }
-        .cell-purple { background: rgba(88, 28, 135, 0.4); color: #e9d5ff; border-color: #a855f7; }
-        .cell-red { background: rgba(127, 29, 29, 0.4); color: #fecaca; border-color: #ef4444; }
-        .cell-yellow { background: rgba(113, 63, 18, 0.4); color: #fef08a; border-color: #eab308; }
-        .cell-green { background: rgba(20, 83, 45, 0.4); color: #bbf7d0; border-color: #22c55e; }
-        .cell-blue { background: rgba(30, 58, 138, 0.4); color: #bfdbfe; border-color: #3b82f6; }
-        
-        /* Cross Bet Active Indicator */
-        .cross-bet-active {
-            border: 2px solid #fbbf24 !important;
-            box-shadow: 0 0 10px #fbbf24 !important;
-            transform: scale(1.02);
+        .tracker-footer {
+            width: 100%;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: 4px;
+            padding-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.6rem;
+            color: #64748b;
+            font-weight: 500;
         }
+        .hits-text { color: var(--gold); font-weight: 700; }
+
+        /* HEATMAP STYLES (PREMIUM GLOWS) */
+        .status-normal { background: rgba(30, 41, 59, 0.4); }
+        
+        .status-purple { background: rgba(88, 28, 135, 0.2); border: 1px solid #a855f7; box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.1); }
+        .status-purple .tracker-val { color: #d8b4fe; text-shadow: 0 0 10px #a855f7; }
+
+        .status-red { background: rgba(127, 29, 29, 0.3); border: 1px solid #ef4444; animation: glow-red 3s infinite alternate; }
+        .status-red .tracker-val { color: #fca5a5; text-shadow: 0 0 10px #ef4444; }
+
+        .status-yellow { background: rgba(113, 63, 18, 0.3); border: 1px solid #eab308; box-shadow: inset 0 0 20px rgba(234, 179, 8, 0.2); }
+        .status-yellow .tracker-val { color: #fde047; text-shadow: 0 0 10px #eab308; }
+
+        .status-green { background: rgba(20, 83, 45, 0.4); border: 1px solid #22c55e; animation: glow-green 2s infinite alternate; }
+        .status-green .tracker-val { color: #86efac; text-shadow: 0 0 15px #22c55e; }
+
+        .status-blue { 
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.6), rgba(30, 58, 138, 0.3)); 
+            border: 1px solid #3b82f6; 
+            animation: glow-blue 1.5s infinite alternate; 
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        .status-blue .tracker-val { color: #bfdbfe; text-shadow: 0 0 20px #3b82f6; }
+
+        @keyframes glow-red { from { box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); } to { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); } }
+        @keyframes glow-green { from { box-shadow: 0 0 5px rgba(34, 197, 94, 0.2); } to { box-shadow: 0 0 20px rgba(34, 197, 94, 0.6); } }
+        @keyframes glow-blue { from { box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); border-color: #60a5fa; } to { box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); border-color: #93c5fd; } }
+
+        /* GOLD TEXT GRADIENT */
+        .text-gold-gradient {
+            background: linear-gradient(to bottom, #FDE047, #D4AF37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        /* SCAN OVERLAY */
+        #scanOverlay { background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); z-index: 100; }
+        .scan-line { width: 100%; height: 2px; background: var(--neon-green); box-shadow: 0 0 15px var(--neon-green); animation: scanMove 1.5s infinite ease-in-out; }
+        @keyframes scanMove { 0% { transform: translateY(-100px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(100px); opacity: 0; } }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden bg-slate-950">
+<body class="h-screen flex overflow-hidden">
+    <div class="noise-bg"></div>
+
+    <!-- HIDDEN INPUT FOR CAMERA -->
+    <input type="file" id="cameraInput" accept="image/*" style="display:none" onchange="processImage(this)">
 
     <!-- TEXT IMPORT MODAL -->
-    <div id="textModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-800 p-4 rounded-xl w-full max-w-lg border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-lg font-bold text-white"><i class="fas fa-paste mr-2"></i>Importar Texto Masivo</h3>
-                <button onclick="closeTextModal()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+    <div id="textModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+                <h3 class="text-xl font-bold text-white tracking-wide">Importar Datos</h3>
+                <button onclick="closeTextModal()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <p class="text-xs text-slate-400 mb-2">Orden: El <strong>PRIMER</strong> número que escribas será el <strong>MÁS RECIENTE</strong> (Último en salir).</p>
-            <textarea id="bulkTextInput" class="w-full flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-white font-mono mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none h-40" placeholder="32, 19, 21..."></textarea>
-            <div class="flex gap-2 justify-end">
-                <button onclick="closeTextModal()" class="px-4 py-2 bg-slate-700 text-white rounded text-sm hover:bg-slate-600">Cancelar</button>
-                <button onclick="processBulkText()" class="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-bold hover:bg-indigo-500 shadow-lg shadow-indigo-900/50">
+            <p class="text-xs text-gray-400 mb-2 font-medium">PEGAR SECUENCIA (Orden: Izquierda = Más Reciente)</p>
+            <textarea id="bulkTextInput" class="w-full flex-1 bg-black/50 border border-gray-700 rounded-xl p-4 text-sm text-white font-mono mb-4 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none resize-none h-40 shadow-inner" placeholder="Ej: 32, 15, 0, 4..."></textarea>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeTextModal()" class="px-5 py-2.5 bg-gray-800 text-gray-300 rounded-xl text-xs font-bold hover:bg-gray-700 transition">CANCELAR</button>
+                <button onclick="processBulkText()" class="px-5 py-2.5 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-xl text-xs font-bold hover:from-yellow-500 hover:to-yellow-400 shadow-lg shadow-yellow-900/40 transition">
                     <i class="fas fa-check mr-1"></i> PROCESAR
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- SCAN LOADING OVERLAY -->
+    <div id="scanOverlay" class="hidden fixed inset-0 flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-20 h-20 border border-green-500/50 rounded-2xl relative overflow-hidden mb-6 flex items-center justify-center bg-green-900/10 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+            <i class="fas fa-microchip text-4xl text-green-500"></i>
+            <div class="absolute top-0 left-0 right-0 scan-line"></div>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-2 tracking-widest">ANALIZANDO</h3>
+        <p class="text-green-400 text-xs font-mono uppercase tracking-widest mb-8">Extrayendo datos visuales...</p>
+        <p id="scanStatus" class="text-[10px] text-gray-500 font-mono">Iniciando motor neuronal...</p>
+    </div>
+
     <!-- LEFT PANEL: Dashboard -->
-    <div class="flex-1 flex flex-col h-full overflow-hidden">
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative z-10">
         <!-- Scrollable Container -->
-        <div class="flex-1 overflow-y-auto p-2 space-y-2">
+        <div class="flex-1 overflow-y-auto p-3 space-y-4">
             
             <!-- Header -->
-            <div class="flex justify-between items-center mb-1 bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                <div class="flex items-center gap-2">
-                    <h1 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center">
-                        <i class="fas fa-chart-line mr-2"></i>Monitor
-                    </h1>
-                    <button id="timerBtn" onclick="toggleTimer()" class="text-lg font-mono font-bold text-slate-400 bg-slate-900/50 px-3 py-1 rounded-md border border-slate-700 hover:text-white transition flex items-center cursor-pointer ml-2 shadow-inner">
-                        <i class="far fa-clock mr-2 text-sm"></i><span id="timeDisplay">60:00</span>
-                    </button>
+            <div class="flex justify-between items-center bg-black/40 p-3 rounded-2xl border border-white/5 backdrop-blur-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-700 flex items-center justify-center shadow-lg shadow-yellow-900/50">
+                        <i class="fas fa-crown text-black text-sm"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-black text-white tracking-widest uppercase">Roulette <span class="text-gold-gradient">Royale</span></h1>
+                        <div class="text-[10px] text-gray-500 font-medium tracking-wide">AI PREDICTOR V2</div>
+                    </div>
                 </div>
+                
                 <div class="flex gap-2">
-                    <!-- TEXT IMPORT BUTTON -->
-                    <button onclick="openTextModal()" class="px-3 py-1 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-500 transition shadow-lg shadow-blue-900/50 flex items-center gap-1">
-                        <i class="fas fa-edit"></i> TEXTO
-                    </button>
-                    <button onclick="undoLast()" class="px-3 py-1 bg-slate-800 rounded text-[10px] hover:bg-slate-700 transition border border-slate-700">
-                        <i class="fas fa-undo"></i>
-                    </button>
-                    <button onclick="confirmReset()" class="px-3 py-1 bg-red-900/30 text-red-400 rounded text-[10px] hover:bg-red-900/50 transition border border-red-900/30">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button onclick="openTextModal()" class="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-300 transition border border-gray-700"><i class="fas fa-pen"></i></button>
+                    <button onclick="document.getElementById('cameraInput').click()" class="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-300 transition border border-gray-700"><i class="fas fa-camera"></i></button>
+                    <button onclick="undoLast()" class="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-300 transition border border-gray-700"><i class="fas fa-undo"></i></button>
+                    <button onclick="confirmReset()" class="w-8 h-8 rounded-lg bg-red-900/30 hover:bg-red-900/50 text-red-400 flex items-center justify-center transition border border-red-900/30"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>
 
             <!-- History Strip -->
-            <div class="relative border-b border-slate-800 pb-2 mb-2 min-h-[45px]">
-                <div id="historyList" class="flex overflow-x-auto py-1 items-center h-full scrollbar-hide">
-                    <span class="text-[10px] text-slate-600 w-full text-center italic mt-1">Historial vacío...</span>
+            <div class="relative bg-black/20 rounded-xl p-2 border border-white/5">
+                <div id="historyList" class="flex overflow-x-auto py-2 px-1 items-center h-16 scrollbar-hide gap-2">
+                    <span class="text-[10px] text-gray-600 w-full text-center italic">Esperando primer giro...</span>
                 </div>
-                <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none"></div>
-            </div>
-
-            <!-- CROSS BET STATUS BAR -->
-            <div id="crossBetStatus" class="hidden mb-2 p-2 bg-yellow-900/40 border border-yellow-600 rounded-lg text-center animate-pulse">
-                <span class="text-yellow-400 font-bold text-xs uppercase tracking-widest"><i class="fas fa-bolt mr-2"></i>CRUCE DE ZONAS (5+) ACTIVO</span>
+                <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0f172a] to-transparent pointer-events-none rounded-r-xl"></div>
             </div>
 
             <!-- AI PREDICTIONS -->
-            <div class="grid grid-cols-3 gap-2 mb-2">
-                <div class="prediction-box flex flex-col items-center justify-center p-2 text-center">
-                    <div class="text-[9px] uppercase text-red-300 font-bold mb-0 tracking-wider">Tendencia 🔥</div>
-                    <div id="predHot" class="prediction-number text-red-400">-</div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="prediction-box p-3 text-center">
+                    <div class="text-[9px] uppercase text-red-400 font-black tracking-widest mb-1">Tendencia</div>
+                    <div id="predHot" class="prediction-number text-white">-</div>
+                    <div class="text-[8px] text-gray-500 mt-1 uppercase">Frecuencia</div>
                 </div>
                 
-                <div class="prediction-box flex flex-col items-center justify-center p-2 text-center border-indigo-500 shadow-indigo-500/10 shadow-lg transform scale-[1.02] z-10 bg-indigo-900/20">
-                    <div class="text-[9px] uppercase text-indigo-300 font-bold mb-0 tracking-wider">IA Mix 🎯</div>
+                <div class="prediction-box p-3 text-center border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.15)] transform scale-105 z-10 bg-indigo-900/20">
+                    <div class="text-[9px] uppercase text-indigo-300 font-black tracking-widest mb-1">IA Target</div>
                     <div id="predSmart" class="prediction-number text-white animate-pulse-slow">-</div>
+                    <div class="text-[8px] text-indigo-300/50 mt-1 uppercase">Algoritmo</div>
                 </div>
 
-                <div class="prediction-box flex flex-col items-center justify-center p-2 text-center">
-                    <div class="text-[9px] uppercase text-cyan-300 font-bold mb-0 tracking-wider">Atrasado ❄️</div>
-                    <div id="predCold" class="prediction-number text-cyan-400">-</div>
+                <div class="prediction-box p-3 text-center">
+                    <div class="text-[9px] uppercase text-cyan-400 font-black tracking-widest mb-1">Atrasado</div>
+                    <div id="predCold" class="prediction-number text-white">-</div>
+                    <div class="text-[8px] text-gray-500 mt-1 uppercase">Tiempo</div>
                 </div>
             </div>
             
             <!-- LIVE TRACKER GRID -->
-            <div id="trackerDashboard">
-                <h3 class="text-[10px] text-slate-500 uppercase font-bold mb-1 tracking-widest pl-1">Probabilidades en Vivo (Atrasos)</h3>
+            <div id="trackerDashboard" class="glass-panel p-4 rounded-2xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs text-white font-bold tracking-widest uppercase flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Monitor en Vivo
+                    </h3>
+                    <div class="text-[10px] font-mono text-gray-400">SENSIBILIDAD: <span class="text-yellow-500">ALTA</span></div>
+                </div>
                 
-                <!-- GROUP 1: SIMPLE CHANCES -->
-                <div class="mb-3 p-2 bg-slate-900/40 rounded-lg border border-slate-800 border-l-4 border-l-slate-600">
-                    <h4 class="text-[10px] text-slate-300 uppercase font-bold mb-2 flex items-center">
-                        <i class="fas fa-adjust mr-1.5"></i> Chances Simples (Inicio: 3+)
-                    </h4>
+                <!-- Simple Chances -->
+                <div class="tracker-grid mb-3">
+                    <div id="track-red" class="tracker-cell status-normal">
+                        <span class="tracker-label text-red-400">Rojo</span>
+                        <span id="val-red" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-red">0</span></span>
+                            <span>M: <span id="max-red">0</span></span>
+                        </div>
+                    </div>
+                    <div id="track-black" class="tracker-cell status-normal">
+                        <span class="tracker-label text-gray-400">Negro</span>
+                        <span id="val-black" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-black">0</span></span>
+                            <span>M: <span id="max-black">0</span></span>
+                        </div>
+                    </div>
                     
-                    <div class="tracker-grid mb-2">
-                        <div id="track-red" class="tracker-cell status-normal">
-                            <span class="tracker-label">Rojo</span>
-                            <span id="val-red" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
-                        </div>
-                        <div id="track-black" class="tracker-cell status-normal">
-                            <span class="tracker-label">Negro</span>
-                            <span id="val-black" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
-                        </div>
-                        <!-- Analysis Box: Simple -->
-                        <div class="tracker-cell bg-slate-800 border border-slate-700">
-                            <span class="tracker-label text-[8px] opacity-70">Max Atrasos</span>
-                            <div class="flex justify-between w-full px-1 mt-1">
-                                <span class="text-red-400 font-bold text-xs">R:<span id="max-red" class="text-white ml-0.5">0</span></span>
-                                <span class="text-slate-400 font-bold text-xs">N:<span id="max-black" class="text-white ml-0.5">0</span></span>
-                            </div>
-                        </div>
+                    <!-- RELOJ -->
+                    <div class="tracker-cell bg-black/40 border border-white/10 flex flex-col items-center justify-center">
+                        <span class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Hora</span>
+                        <span id="liveClock" class="text-base font-mono font-bold text-white tracking-widest">--:--</span>
+                    </div>
 
-                        <div id="track-even" class="tracker-cell status-normal">
-                            <span class="tracker-label">Pares</span>
-                            <span id="val-even" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
-                        </div>
-                        <div id="track-odd" class="tracker-cell status-normal">
-                            <span class="tracker-label">Impar</span>
-                            <span id="val-odd" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
-                        </div>
-                        <!-- Analysis Box: Parity -->
-                        <div class="tracker-cell bg-slate-800 border border-slate-700">
-                            <span class="tracker-label text-[8px] opacity-70">Max Atrasos</span>
-                            <div class="flex justify-between w-full px-1 mt-1">
-                                <span class="text-blue-400 font-bold text-xs">P:<span id="max-even" class="text-white ml-0.5">0</span></span>
-                                <span class="text-yellow-500 font-bold text-xs">I:<span id="max-odd" class="text-white ml-0.5">0</span></span>
-                            </div>
+                    <div id="track-even" class="tracker-cell status-normal">
+                        <span class="tracker-label text-blue-300">Par</span>
+                        <span id="val-even" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-even">0</span></span>
+                            <span>M: <span id="max-even">0</span></span>
                         </div>
                     </div>
-                </div>
-
-                <!-- GROUP 2: DOZENS -->
-                <div class="mb-3 p-2 bg-slate-900/40 rounded-lg border border-slate-800 border-l-4 border-l-indigo-600">
-                    <h4 class="text-[10px] text-indigo-300 uppercase font-bold mb-2 flex items-center">
-                        <i class="fas fa-th-large mr-1.5"></i> Docenas (Cruce 2x > 5+)
-                    </h4>
+                    <div id="track-odd" class="tracker-cell status-normal">
+                        <span class="tracker-label text-blue-300">Impar</span>
+                        <span id="val-odd" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-odd">0</span></span>
+                            <span>M: <span id="max-odd">0</span></span>
+                        </div>
+                    </div>
                     
-                    <div class="tracker-grid mb-1">
-                        <div id="track-doz1" class="tracker-cell status-normal">
-                            <span class="tracker-label">1ª (1-12)</span>
-                            <span id="val-doz1" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
-                        </div>
-                        <div id="track-doz2" class="tracker-cell status-normal">
-                            <span class="tracker-label">2ª (13-24)</span>
-                            <span id="val-doz2" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
-                        </div>
-                        <div id="track-doz3" class="tracker-cell status-normal">
-                            <span class="tracker-label">3ª (25-36)</span>
-                            <span id="val-doz3" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
+                    <!-- TIMER -->
+                    <div class="tracker-cell bg-black/40 border border-white/10 flex flex-col items-center justify-center cursor-pointer active:bg-white/5 transition" onclick="resetTimer()">
+                        <span class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Sesión</span>
+                        <span id="sessionTimer" class="text-base font-mono font-bold text-yellow-500 tracking-widest">60:00</span>
+                    </div>
+                </div>
+
+                <!-- Dozens -->
+                <div class="flex items-center gap-2 mb-2 mt-4 opacity-50">
+                    <div class="h-px bg-white/20 flex-1"></div>
+                    <span class="text-[9px] uppercase tracking-widest text-white">Docenas</span>
+                    <div class="h-px bg-white/20 flex-1"></div>
+                </div>
+                <div class="tracker-grid mb-3">
+                    <div id="track-doz1" class="tracker-cell status-normal">
+                        <span class="tracker-label">1ª (1-12)</span>
+                        <span id="val-doz1" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-doz1">0</span></span>
+                            <span>M: <span id="max-doz1">0</span></span>
                         </div>
                     </div>
-                    <!-- Analysis Box: Dozens -->
-                    <div class="tracker-cell bg-slate-800 border border-slate-700 mb-0 py-1">
-                        <span class="tracker-label text-[8px] opacity-70">Max Atrasos (Récord)</span>
-                        <div class="flex justify-around w-full px-1 mt-0.5">
-                            <span class="text-slate-300 font-bold text-xs">1ª:<span id="max-doz1" class="text-white ml-0.5">0</span></span>
-                            <span class="text-slate-300 font-bold text-xs">2ª:<span id="max-doz2" class="text-white ml-0.5">0</span></span>
-                            <span class="text-slate-300 font-bold text-xs">3ª:<span id="max-doz3" class="text-white ml-0.5">0</span></span>
+                    <div id="track-doz2" class="tracker-cell status-normal">
+                        <span class="tracker-label">2ª (13-24)</span>
+                        <span id="val-doz2" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-doz2">0</span></span>
+                            <span>M: <span id="max-doz2">0</span></span>
+                        </div>
+                    </div>
+                    <div id="track-doz3" class="tracker-cell status-normal">
+                        <span class="tracker-label">3ª (25-36)</span>
+                        <span id="val-doz3" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-doz3">0</span></span>
+                            <span>M: <span id="max-doz3">0</span></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- GROUP 3: COLUMNS -->
-                <div class="mb-3 p-2 bg-slate-900/40 rounded-lg border border-slate-800 border-l-4 border-l-fuchsia-600">
-                    <h4 class="text-[10px] text-fuchsia-300 uppercase font-bold mb-2 flex items-center">
-                        <i class="fas fa-columns mr-1.5"></i> Columnas (Cruce 2x > 5+)
-                    </h4>
-                    
-                    <div class="tracker-grid mb-1">
-                        <div id="track-col1" class="tracker-cell status-normal">
-                            <span class="tracker-label">Col 1</span>
-                            <span id="val-col1" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
-                        </div>
-                        <div id="track-col2" class="tracker-cell status-normal">
-                            <span class="tracker-label">Col 2</span>
-                            <span id="val-col2" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
-                        </div>
-                        <div id="track-col3" class="tracker-cell status-normal">
-                            <span class="tracker-label">Col 3</span>
-                            <span id="val-col3" class="tracker-val">0</span>
-                            <span class="tracker-sub">Giros</span>
-                        </div>
-                    </div>
-                    <!-- Analysis Box: Columns -->
-                    <div class="tracker-cell bg-slate-800 border border-slate-700 mb-0 py-1">
-                        <span class="tracker-label text-[8px] opacity-70">Max Atrasos (Récord)</span>
-                        <div class="flex justify-around w-full px-1 mt-0.5">
-                            <span class="text-slate-300 font-bold text-xs">C1:<span id="max-col1" class="text-white ml-0.5">0</span></span>
-                            <span class="text-slate-300 font-bold text-xs">C2:<span id="max-col2" class="text-white ml-0.5">0</span></span>
-                            <span class="text-slate-300 font-bold text-xs">C3:<span id="max-col3" class="text-white ml-0.5">0</span></span>
-                        </div>
-                    </div>
+                <!-- Columns -->
+                <div class="flex items-center gap-2 mb-2 mt-4 opacity-50">
+                    <div class="h-px bg-white/20 flex-1"></div>
+                    <span class="text-[9px] uppercase tracking-widest text-white">Columnas</span>
+                    <div class="h-px bg-white/20 flex-1"></div>
                 </div>
-
-                <!-- GROUP 4: FRENCH BETS -->
-                <div class="mb-3 p-2 bg-slate-900/40 rounded-lg border border-slate-800 border-l-4 border-l-orange-600">
-                    <h4 class="text-[10px] text-orange-300 uppercase font-bold mb-2 flex items-center">
-                        <i class="fas fa-globe-europe mr-1.5"></i> Sector Francés
-                    </h4>
-                    
-                    <div class="tracker-grid-2 mb-1">
-                        <div id="track-voisins" class="tracker-cell status-normal">
-                            <span class="tracker-label">Voisins (0)</span>
-                            <span id="val-voisins" class="tracker-val">0</span>
-                        </div>
-                        <div id="track-tiers" class="tracker-cell status-normal">
-                            <span class="tracker-label">Tiers (5/8)</span>
-                            <span id="val-tiers" class="tracker-val">0</span>
-                        </div>
-                        <div id="track-orph" class="tracker-cell status-normal">
-                            <span class="tracker-label">Orphelins</span>
-                            <span id="val-orph" class="tracker-val">0</span>
-                        </div>
-                        <div id="track-zero" class="tracker-cell status-normal">
-                            <span class="tracker-label">Jeu 0</span>
-                            <span id="val-zero" class="tracker-val">0</span>
+                <div class="tracker-grid">
+                    <div id="track-col1" class="tracker-cell status-normal">
+                        <span class="tracker-label">Col 1</span>
+                        <span id="val-col1" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-col1">0</span></span>
+                            <span>M: <span id="max-col1">0</span></span>
                         </div>
                     </div>
-                    <!-- Analysis Box: French Bets -->
-                    <div class="tracker-cell bg-slate-800 border border-slate-700 mb-0 py-1">
-                        <span class="tracker-label text-[8px] opacity-70">Max Atrasos (Récord)</span>
-                        <div class="flex justify-around w-full px-1 mt-0.5">
-                            <span class="text-slate-300 font-bold text-xs">V:<span id="max-voisins" class="text-white ml-0.5">0</span></span>
-                            <span class="text-slate-300 font-bold text-xs">T:<span id="max-tiers" class="text-white ml-0.5">0</span></span>
-                            <span class="text-slate-300 font-bold text-xs">O:<span id="max-orph" class="text-white ml-0.5">0</span></span>
-                            <span class="text-slate-300 font-bold text-xs">Z:<span id="max-zero" class="text-white ml-0.5">0</span></span>
+                    <div id="track-col2" class="tracker-cell status-normal">
+                        <span class="tracker-label">Col 2</span>
+                        <span id="val-col2" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-col2">0</span></span>
+                            <span>M: <span id="max-col2">0</span></span>
+                        </div>
+                    </div>
+                    <div id="track-col3" class="tracker-cell status-normal">
+                        <span class="tracker-label">Col 3</span>
+                        <span id="val-col3" class="tracker-val">0</span>
+                        <div class="tracker-footer">
+                            <span class="hits-text">H: <span id="hits-col3">0</span></span>
+                            <span>M: <span id="max-col3">0</span></span>
                         </div>
                     </div>
                 </div>
-
-                <!-- DETAILED ALERTS GRID 5+ TO 20+ (ZONES) -->
-                <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3 font-bold border-t border-slate-800 pt-2">Detalle Atrasos (Doc/Col 5+ a 20+)</h4>
-                <div class="alert-grid" id="detailedAlerts">
-                    <!-- JS will populate -->
-                </div>
-                <div class="flex justify-between text-[9px] text-slate-500 mt-1 px-1">
-                    <span>A: Activas (Racha Actual)</span>
-                    <span>S: Salidas (Racha Rota)</span>
-                </div>
-
-                <!-- DETAILED ALERTS GRID 1 TO 10+ (SIMPLE) -->
-                <h4 class="text-[9px] text-slate-600 uppercase mb-1 mt-3 font-bold border-t border-slate-800 pt-2">Detalle Atrasos (Color/Par 1+ a 10+)</h4>
-                <div class="alert-grid-10" id="detailedAlertsSimple">
-                    <!-- JS will populate -->
-                </div>
-                <div class="flex justify-between text-[9px] text-slate-500 mt-1 px-1">
-                    <span>A: Activas</span>
-                    <span>S: Salidas</span>
-                </div>
-
             </div>
         </div>
     </div>
 
     <!-- RIGHT PANEL: Vertical Numbers Input -->
-    <div class="w-[130px] md:w-[150px] bg-slate-900 border-l border-slate-800 flex flex-col h-full shadow-2xl z-20">
-        <div class="p-2 border-b border-slate-800 bg-slate-800/50">
-            <h2 class="text-[10px] text-slate-400 uppercase font-bold text-center tracking-widest">Entrada</h2>
+    <div class="w-[140px] bg-black/80 border-l border-white/5 flex flex-col h-full shadow-2xl relative z-20 backdrop-blur-xl">
+        <div class="p-4 border-b border-white/5 bg-black/20">
+            <h2 class="text-[10px] text-gray-400 font-black text-center tracking-[0.2em] uppercase">Control</h2>
         </div>
         
-        <div class="flex-1 overflow-y-auto p-1.5 scrollbar-hide">
+        <div class="flex-1 overflow-y-auto p-2 scrollbar-hide">
             <!-- 0 Button -->
-            <button onclick="addNumber(0)" class="num-btn bg-r-green w-full h-9 mb-1 shadow-lg !aspect-auto text-lg">0</button>
+            <button onclick="addNumber(0)" class="num-btn bg-r-green w-full h-10 mb-2 !aspect-auto text-lg hover:brightness-110">0</button>
             
             <!-- 1-36 Grid (3 Cols) -->
-            <div id="numbersGrid" class="grid grid-cols-3 gap-1 pb-4"></div>
+            <div id="numbersGrid" class="grid grid-cols-3 gap-1.5 pb-4"></div>
         </div>
 
-        <div class="p-2 border-t border-slate-800 text-center bg-slate-900">
-             <span class="text-[10px] text-slate-500 font-mono" id="totalSpins">TIROS: 0</span>
+        <div class="p-3 border-t border-white/5 text-center bg-black/40">
+             <span class="text-[9px] text-gray-500 font-mono tracking-widest block mb-1">TOTAL TIROS</span>
+             <span class="text-xl font-bold text-white" id="totalSpins">0</span>
         </div>
     </div>
 
     <!-- Reset Modal -->
-    <div id="resetModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-slate-800 p-6 rounded-xl max-w-sm w-full border border-slate-700 shadow-2xl">
-            <h3 class="text-lg font-bold text-white mb-2">¿Nueva sesión?</h3>
-            <p class="text-slate-400 mb-6 text-sm">Se borrarán los patrones detectados.</p>
+    <div id="resetModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass-panel p-6 rounded-2xl max-w-sm w-full border border-white/10 shadow-2xl transform scale-100 transition-all">
+            <h3 class="text-lg font-bold text-white mb-2 text-center">¿Nueva Sesión?</h3>
+            <p class="text-gray-400 mb-6 text-sm text-center">Se reiniciarán todos los contadores y patrones.</p>
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="closeModal()" class="px-4 py-2 rounded-lg bg-slate-700 text-white font-medium">Cancelar</button>
-                <button onclick="fullReset()" class="px-4 py-2 rounded-lg bg-red-600 text-white font-bold shadow-lg shadow-red-900/30">Reiniciar</button>
+                <button onclick="closeModal()" class="px-4 py-3 rounded-xl bg-gray-800 text-white font-bold text-xs tracking-wider hover:bg-gray-700 transition">CANCELAR</button>
+                <button onclick="fullReset()" class="px-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-800 text-white font-bold text-xs tracking-wider shadow-lg shadow-red-900/50 hover:from-red-500 hover:to-red-700 transition">REINICIAR</button>
             </div>
         </div>
     </div>
@@ -453,24 +462,58 @@
         const COL_2 = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35];
         const COL_3 = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36];
 
-        // French Bets
-        const VOISINS = [22, 18, 29, 7, 28, 12, 35, 3, 26, 0, 32, 15, 19, 4, 21, 2, 25];
-        const TIERS = [27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33];
-        const ORPHELINS = [1, 20, 14, 31, 9, 17, 34, 6];
-        const ZERO_GAME = [12, 35, 3, 26, 0, 32, 15];
-
         const WHEEL_ORDER = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
         let history = [];
+        let timerInterval;
+        let timeLeft = 3600; // 60 mins
         
         window.onload = function() {
-            try {
-                renderGrid();
-                loadState();
-            } catch(e) {
-                console.error("Error inicial:", e);
-            }
+            renderGrid();
+            loadState();
+            startClock();
+            startTimer();
         };
+
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                const el = document.getElementById('liveClock');
+                if(el) el.innerText = now.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
+            }, 1000);
+        }
+
+        function startTimer() {
+            const el = document.getElementById('sessionTimer');
+            if(timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if(el) {
+                        el.innerText = "00:00";
+                        el.classList.add('text-red-500');
+                    }
+                    return;
+                }
+                timeLeft--;
+                const m = Math.floor(timeLeft / 60);
+                const s = timeLeft % 60;
+                if(el) el.innerText = `${m}:${s.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function resetTimer() {
+            timeLeft = 3600;
+            const el = document.getElementById('sessionTimer');
+            if(el) {
+                el.classList.remove('text-red-500');
+                el.classList.add('text-green-400');
+                setTimeout(() => el.classList.remove('text-green-400'), 500);
+                el.innerText = "60:00";
+            }
+            startTimer();
+        }
 
         function renderGrid() {
             const grid = document.getElementById('numbersGrid');
@@ -497,7 +540,13 @@
 
         function confirmReset() { document.getElementById('resetModal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('resetModal').classList.add('hidden'); }
-        function fullReset() { history = []; saveState(); updateUI(); closeModal(); }
+        function fullReset() { 
+            history = []; 
+            saveState(); 
+            updateUI(); 
+            resetTimer();
+            closeModal(); 
+        }
         
         // --- TEXT MODAL FUNCTIONS ---
         function openTextModal() {
@@ -520,11 +569,11 @@
                         count++;
                     }
                 });
-                alert(`✅ Se han importado ${count} números exitosamente.`);
+                alert(`✅ ${count} Números Importados`);
                 closeTextModal();
-                document.getElementById('bulkTextInput').value = ''; 
+                document.getElementById('bulkTextInput').value = '';
             } else {
-                alert("❌ No se encontraron números válidos (0-36).");
+                alert("❌ No se encontraron números válidos.");
             }
         }
 
@@ -535,7 +584,7 @@
 
         function updateUI() {
             renderHistory();
-            document.getElementById('totalSpins').innerText = `TIROS: ${history.length}`;
+            document.getElementById('totalSpins').innerText = history.length;
             calculatePredictions();
             updateDashboard();
         }
@@ -545,7 +594,7 @@
             list.innerHTML = '';
             
             if (history.length === 0) {
-                list.innerHTML = '<span class="text-[10px] text-slate-600 w-full text-center italic mt-1">Historial vacío...</span>';
+                list.innerHTML = '<span class="text-[10px] text-gray-500 w-full text-center italic mt-2 opacity-50">SIN DATOS</span>';
                 return;
             }
 
@@ -556,6 +605,54 @@
                 list.appendChild(badge);
             });
         }
+
+        // --- IMAGE OCR PROCESSING ---
+        function processImage(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            
+            const overlay = document.getElementById('scanOverlay');
+            const status = document.getElementById('scanStatus');
+            overlay.classList.remove('hidden');
+            status.innerText = "Iniciando motor...";
+
+            Tesseract.recognize(
+                file,
+                'eng',
+                {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            status.innerText = `Escaneando: ${Math.round(m.progress * 100)}%`;
+                        } else {
+                            status.innerText = m.status;
+                        }
+                    }
+                }
+            ).then(({ data: { text } }) => {
+                const foundNumbers = text.match(/\b([0-9]|[1-2][0-9]|3[0-6])\b/g);
+                
+                if (foundNumbers && foundNumbers.length > 0) {
+                    let addedCount = 0;
+                    foundNumbers.reverse().forEach(n => {
+                        let val = parseInt(n);
+                        if (!isNaN(val) && val >= 0 && val <= 36) {
+                            addNumber(val);
+                            addedCount++;
+                        }
+                    });
+                    alert(`✅ Escaneo Exitoso: ${addedCount} números.`);
+                } else {
+                    alert("⚠️ No se detectaron números claros.");
+                }
+            }).catch(err => {
+                console.error(err);
+                alert("Error de procesamiento.");
+            }).finally(() => {
+                overlay.classList.add('hidden');
+                input.value = '';
+            });
+        }
+
 
         function calculatePredictions() {
             if (history.length < 3) {
@@ -607,39 +704,38 @@
         function updatePredictionBox(id, num) {
             const el = document.getElementById(id);
             el.innerText = num;
-            el.className = "prediction-number"; 
+            
+            // Remove old color classes
+            el.className = "prediction-number";
+            
             if (num === '-' || num === undefined) {
-                el.classList.add('text-slate-500');
+                el.classList.add('text-gray-500');
                 return;
             }
-            if (num === 0) el.classList.add('text-green-400');
-            else if (RED_NUMBERS.includes(num)) el.classList.add('text-red-400');
-            else el.classList.add('text-slate-200');
+            
+            // Premium Gradient Text based on number color
+            if (num === 0) {
+                el.style.background = "-webkit-linear-gradient(#4ade80, #166534)";
+                el.style.webkitBackgroundClip = "text";
+                el.style.webkitTextFillColor = "transparent";
+            } else if (RED_NUMBERS.includes(num)) {
+                el.style.background = "-webkit-linear-gradient(#f87171, #991b1b)";
+                el.style.webkitBackgroundClip = "text";
+                el.style.webkitTextFillColor = "transparent";
+            } else {
+                el.style.background = "-webkit-linear-gradient(#e2e8f0, #475569)";
+                el.style.webkitBackgroundClip = "text";
+                el.style.webkitTextFillColor = "transparent";
+            }
         }
 
-        // --- Alert Detailed Stats ---
-        let detailedStats = Array.from({length: 22}, () => ({ active: 0, hits: 0 }));
-        let detailedStatsSimple = Array.from({length: 22}, () => ({ active: 0, hits: 0 }));
-        
-        // --- Max Gaps Analysis ---
-        let maxStats = { 
-            red:0, black:0, even:0, odd:0, 
-            doz1:0, doz2:0, doz3:0, 
-            col1:0, col2:0, col3:0,
-            voisins:0, tiers:0, orph:0, zero:0 
-        }; 
-
         function updateDashboard() {
-            calculateSessionStats();
-
-            // Reset stats
-            detailedStats.forEach(s => s.active = 0);
-            detailedStatsSimple.forEach(s => s.active = 0);
+            const stats = calculateStats();
 
             function getGap(checkFn) {
                 if (history.length === 0) return 0;
                 for(let i=0; i<history.length; i++) {
-                    // Corrected: 0 counts as valid gap/miss for outside bets
+                    if (history[i] === 0) continue; 
                     if (checkFn(history[i])) return i;
                 }
                 return history.length;
@@ -647,310 +743,121 @@
 
             const gaps = {
                 red: getGap(n => RED_NUMBERS.includes(n)),
-                black: getGap(n => !RED_NUMBERS.includes(n) && n !== 0), // 0 is miss for Black
-                even: getGap(n => n !== 0 && n % 2 === 0), // 0 is miss for Even
-                odd: getGap(n => n !== 0 && n % 2 !== 0), 
+                black: getGap(n => !RED_NUMBERS.includes(n)),
+                even: getGap(n => n % 2 === 0),
+                odd: getGap(n => n % 2 !== 0),
                 doz1: getGap(n => n >= 1 && n <= 12),
                 doz2: getGap(n => n >= 13 && n <= 24),
                 doz3: getGap(n => n >= 25 && n <= 36),
                 col1: getGap(n => COL_1.includes(n)),
                 col2: getGap(n => COL_2.includes(n)),
-                col3: getGap(n => COL_3.includes(n)),
-                voisins: getGap(n => VOISINS.includes(n)),
-                tiers: getGap(n => TIERS.includes(n)),
-                orph: getGap(n => ORPHELINS.includes(n)),
-                zero: getGap(n => ZERO_GAME.includes(n))
+                col3: getGap(n => COL_3.includes(n))
             };
 
-            // ---- LOGIC: CROSS BET CHECK (STRICT ZONE CROSS) ----
+            // Calculate Leaders
+            const isRedLeader = stats.counts.red > stats.counts.black;
+            const isBlackLeader = stats.counts.black > stats.counts.red;
             
-            // 2. Contar Alertas de Zona (Doc/Col >= 5)
-            let zoneAlertCount = 0;
-            if(gaps.doz1 >= 5) zoneAlertCount++;
-            if(gaps.doz2 >= 5) zoneAlertCount++;
-            if(gaps.doz3 >= 5) zoneAlertCount++;
-            if(gaps.col1 >= 5) zoneAlertCount++;
-            if(gaps.col2 >= 5) zoneAlertCount++;
-            if(gaps.col3 >= 5) zoneAlertCount++;
+            const isEvenLeader = stats.counts.even > stats.counts.odd;
+            const isOddLeader = stats.counts.odd > stats.counts.even;
+
+            const maxDozHits = Math.max(stats.counts.doz1, stats.counts.doz2, stats.counts.doz3);
+            const isD1Leader = stats.counts.doz1 === maxDozHits && maxDozHits > 0;
+            const isD2Leader = stats.counts.doz2 === maxDozHits && maxDozHits > 0;
+            const isD3Leader = stats.counts.doz3 === maxDozHits && maxDozHits > 0;
+
+            const maxColHits = Math.max(stats.counts.col1, stats.counts.col2, stats.counts.col3);
+            const isC1Leader = stats.counts.col1 === maxColHits && maxColHits > 0;
+            const isC2Leader = stats.counts.col2 === maxColHits && maxColHits > 0;
+            const isC3Leader = stats.counts.col3 === maxColHits && maxColHits > 0;
+
+            // Update DOM
+            updateCell('track-red', 'val-red', 'max-red', 'hits-red', gaps.red, stats.maxGaps.red, stats.counts.red, isRedLeader, true);
+            updateCell('track-black', 'val-black', 'max-black', 'hits-black', gaps.black, stats.maxGaps.black, stats.counts.black, isBlackLeader, true);
             
-            // Condición de Activación de Apuesta en Zonas:
-            // Cruce de Zonas: 2 o más zonas están atrasadas (5+)
-            // SOLO ESTO activa sugerencias en Zonas
-            const isZoneBetActive = zoneAlertCount >= 2;
+            updateCell('track-even', 'val-even', 'max-even', 'hits-even', gaps.even, stats.maxGaps.even, stats.counts.even, isEvenLeader, true);
+            updateCell('track-odd', 'val-odd', 'max-odd', 'hits-odd', gaps.odd, stats.maxGaps.odd, stats.counts.odd, isOddLeader, true);
             
-            // Update UI Status Bar
-            const statusDiv = document.getElementById('crossBetStatus');
-            if (isZoneBetActive) {
-                statusDiv.classList.remove('hidden');
-            } else {
-                statusDiv.classList.add('hidden');
-            }
-
-            // --- Simple Chances: Strict Logic (Red at 3, $ at 3) ---
-            updateCellSimple('track-red', 'val-red', gaps.red);
-            updateCellSimple('track-black', 'val-black', gaps.black);
-            updateCellSimple('track-even', 'val-even', gaps.even);
-            updateCellSimple('track-odd', 'val-odd', gaps.odd);
+            updateCell('track-doz1', 'val-doz1', 'max-doz1', 'hits-doz1', gaps.doz1, stats.maxGaps.doz1, stats.counts.doz1, isD1Leader, false);
+            updateCell('track-doz2', 'val-doz2', 'max-doz2', 'hits-doz2', gaps.doz2, stats.maxGaps.doz2, stats.counts.doz2, isD2Leader, false);
+            updateCell('track-doz3', 'val-doz3', 'max-doz3', 'hits-doz3', gaps.doz3, stats.maxGaps.doz3, stats.counts.doz3, isD3Leader, false);
             
-            // --- Zones: Cross Logic (Red at 5, $ at 5 if active) ---
-            updateCellZone('track-doz1', 'val-doz1', gaps.doz1, isZoneBetActive);
-            updateCellZone('track-doz2', 'val-doz2', gaps.doz2, isZoneBetActive);
-            updateCellZone('track-doz3', 'val-doz3', gaps.doz3, isZoneBetActive);
-            updateCellZone('track-col1', 'val-col1', gaps.col1, isZoneBetActive);
-            updateCellZone('track-col2', 'val-col2', gaps.col2, isZoneBetActive);
-            updateCellZone('track-col3', 'val-col3', gaps.col3, isZoneBetActive);
-
-            // Update French Bets (Standard Coloring)
-            updateCellStandard('track-voisins', 'val-voisins', gaps.voisins);
-            updateCellStandard('track-tiers', 'val-tiers', gaps.tiers);
-            updateCellStandard('track-orph', 'val-orph', gaps.orph);
-            updateCellStandard('track-zero', 'val-zero', gaps.zero);
-
-            // Update Max Stats
-            document.getElementById('max-red').innerText = maxStats.red;
-            document.getElementById('max-black').innerText = maxStats.black;
-            document.getElementById('max-even').innerText = maxStats.even;
-            document.getElementById('max-odd').innerText = maxStats.odd;
-
-            document.getElementById('max-doz1').innerText = maxStats.doz1;
-            document.getElementById('max-doz2').innerText = maxStats.doz2;
-            document.getElementById('max-doz3').innerText = maxStats.doz3;
-            
-            document.getElementById('max-col1').innerText = maxStats.col1;
-            document.getElementById('max-col2').innerText = maxStats.col2;
-            document.getElementById('max-col3').innerText = maxStats.col3;
-
-            document.getElementById('max-voisins').innerText = maxStats.voisins;
-            document.getElementById('max-tiers').innerText = maxStats.tiers;
-            document.getElementById('max-orph').innerText = maxStats.orph;
-            document.getElementById('max-zero').innerText = maxStats.zero;
-
-            // Populate Detailed Grids
-            const zoneKeys = ['doz1', 'doz2', 'doz3', 'col1', 'col2', 'col3'];
-            zoneKeys.forEach(key => {
-                const g = gaps[key];
-                if (g >= 5) {
-                    let limit = Math.min(g, 20);
-                    for(let i = 5; i <= limit; i++) detailedStats[i].active++;
-                }
-            });
-
-            const simpleKeys = ['red', 'black', 'even', 'odd'];
-            simpleKeys.forEach(key => {
-                const g = gaps[key];
-                if (g >= 1) { 
-                    let limit = Math.min(g, 10);
-                    for(let i = 1; i <= limit; i++) detailedStatsSimple[i].active++;
-                }
-            });
-
-            renderDetailedGrid('detailedAlerts', detailedStats, 5, 20, false);
-            renderDetailedGrid('detailedAlertsSimple', detailedStatsSimple, 1, 10, true);
+            updateCell('track-col1', 'val-col1', 'max-col1', 'hits-col1', gaps.col1, stats.maxGaps.col1, stats.counts.col1, isC1Leader, false);
+            updateCell('track-col2', 'val-col2', 'max-col2', 'hits-col2', gaps.col2, stats.maxGaps.col2, stats.counts.col2, isC2Leader, false);
+            updateCell('track-col3', 'val-col3', 'max-col3', 'hits-col3', gaps.col3, stats.maxGaps.col3, stats.counts.col3, isC3Leader, false);
         }
 
-        function renderDetailedGrid(containerId, statsArray, start, end, isSimple = false) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            for(let i=start; i<=end; i++) {
-                const s = statsArray[i];
-                let colorClass = 'cell-base'; 
-                
-                if (isSimple) {
-                    if(i >= 3) colorClass = 'cell-red';
-                    if(i >= 5) colorClass = 'cell-purple'; 
-                    if(i >= 10) colorClass = 'cell-yellow';
-                    if(i >= 15) colorClass = 'cell-green';
-                    if(i >= 20) colorClass = 'cell-blue';
-                } else {
-                    if(i >= 5) colorClass = 'cell-red'; // Start Red at 5 per request
-                    if(i >= 10) colorClass = 'cell-yellow';
-                    if(i >= 15) colorClass = 'cell-green';
-                    if(i >= 20) colorClass = 'cell-blue';
-                }
-
-                const div = document.createElement('div');
-                div.className = `alert-cell ${colorClass}`;
-                div.innerHTML = `
-                    <b>${i}${i===end?'+':''}</b>
-                    <div class="alert-stats">
-                        <span>A:${s.active}</span>
-                        <span>S:${s.hits}</span>
-                    </div>
-                `;
-                container.appendChild(div);
-            }
-        }
-
-        function calculateSessionStats() {
-            detailedStats.forEach(s => s.hits = 0);
-            detailedStatsSimple.forEach(s => s.hits = 0);
-            maxStats = { 
-                red:0, black:0, even:0, odd:0, 
-                doz1:0, doz2:0, doz3:0, 
-                col1:0, col2:0, col3:0,
-                voisins:0, tiers:0, orph:0, zero:0 
-            }; 
+        function calculateStats() {
+            let maxGaps = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0 };
+            let current = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0 };
+            let counts = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0 };
             
-            if (history.length === 0) return;
-
-            const trackers = [
-                { id: 'red', gap: 0, check: (n) => RED_NUMBERS.includes(n), detail: false, isSimple: true },
-                { id: 'black', gap: 0, check: (n) => !RED_NUMBERS.includes(n) && n !== 0, detail: false, isSimple: true },
-                { id: 'even', gap: 0, check: (n) => n !== 0 && n % 2 === 0, detail: false, isSimple: true },
-                { id: 'odd', gap: 0, check: (n) => n !== 0 && n % 2 !== 0, detail: false, isSimple: true },
-                
-                { id: 'doz1', gap: 0, check: (n) => n >= 1 && n <= 12, detail: true, isSimple: false },
-                { id: 'doz2', gap: 0, check: (n) => n >= 13 && n <= 24, detail: true, isSimple: false },
-                { id: 'doz3', gap: 0, check: (n) => n >= 25 && n <= 36, detail: true, isSimple: false },
-                
-                { id: 'col1', gap: 0, check: (n) => COL_1.includes(n), detail: true, isSimple: false },
-                { id: 'col2', gap: 0, check: (n) => COL_2.includes(n), detail: true, isSimple: false },
-                { id: 'col3', gap: 0, check: (n) => COL_3.includes(n), detail: true, isSimple: false },
-
-                { id: 'voisins', gap: 0, check: (n) => VOISINS.includes(n), detail: false, isSimple: false },
-                { id: 'tiers', gap: 0, check: (n) => TIERS.includes(n), detail: false, isSimple: false },
-                { id: 'orph', gap: 0, check: (n) => ORPHELINS.includes(n), detail: false, isSimple: false },
-                { id: 'zero', gap: 0, check: (n) => ZERO_GAME.includes(n), detail: false, isSimple: false }
-            ];
-
-            const reversedHistory = history.slice().reverse();
+            const reversed = history.slice().reverse();
             
-            reversedHistory.forEach(num => {
-                trackers.forEach(t => {
-                    if (t.check(num)) {
-                        if (maxStats.hasOwnProperty(t.id)) {
-                            if (t.gap > maxStats[t.id]) maxStats[t.id] = t.gap;
-                        }
+            reversed.forEach(n => {
+                if(n === 0) return; 
 
-                        if (t.detail) {
-                            if (t.gap >= 5) {
-                                let idx = Math.min(t.gap, 20);
-                                detailedStats[idx].hits++; 
-                            }
-                        } else if (t.isSimple) {
-                            if (t.gap >= 1) {
-                                let idx = Math.min(t.gap, 10);
-                                detailedStatsSimple[idx].hits++;
-                            }
-                        }
-                        t.gap = 0; 
+                const updateMetric = (key, hit) => {
+                    if (hit) {
+                        current[key] = 0;
+                        counts[key]++;
                     } else {
-                        t.gap++; 
-                        if (maxStats.hasOwnProperty(t.id)) {
-                            if (t.gap > maxStats[t.id]) maxStats[t.id] = t.gap;
-                        }
+                        current[key]++;
+                        if (current[key] > maxGaps[key]) maxGaps[key] = current[key];
                     }
-                });
+                };
+
+                updateMetric('red', RED_NUMBERS.includes(n));
+                updateMetric('black', !RED_NUMBERS.includes(n));
+                updateMetric('even', n % 2 === 0);
+                updateMetric('odd', n % 2 !== 0);
+                updateMetric('doz1', n >= 1 && n <= 12);
+                updateMetric('doz2', n >= 13 && n <= 24);
+                updateMetric('doz3', n >= 25 && n <= 36);
+                updateMetric('col1', COL_1.includes(n));
+                updateMetric('col2', COL_2.includes(n));
+                updateMetric('col3', COL_3.includes(n));
             });
+            
+            return { maxGaps, counts };
         }
 
-        // Logic 1: SIMPLE CHANCES (Strict: Red at 3, Bet at 3)
-        function updateCellSimple(cardId, valId, gap) {
+        function updateCell(cardId, valId, maxId, hitsId, gap, maxGap, hits, isLeader, isSimple) {
             const card = document.getElementById(cardId);
             const val = document.getElementById(valId);
-            const sub = card.querySelector('.tracker-sub'); 
+            const maxVal = document.getElementById(maxId);
+            const hitsVal = document.getElementById(hitsId);
             
             val.innerText = gap;
-            card.className = "tracker-cell";
+            maxVal.innerText = maxGap;
+            hitsVal.innerText = hits;
             
-            // BETTING: Starts at Gap 3 ($1)
-            if (gap >= 3) {
-                const bet = Math.pow(2, gap - 3);
-                if (sub) sub.innerHTML = `<span class="text-white font-bold text-lg" style="color:#fbbf24; text-shadow:0 0 5px #b45309">$${bet.toLocaleString()}</span>`;
-            } else {
-                if (sub) sub.innerText = "Giros";
+            const oldBadge = card.querySelector('.leader-badge');
+            if(oldBadge) oldBadge.remove();
+
+            if(isLeader) {
+                const badge = document.createElement('div');
+                badge.className = 'leader-badge';
+                badge.innerHTML = '<i class="fas fa-crown text-[10px]"></i>';
+                card.appendChild(badge);
             }
             
-            // COLORS: 3 (Red), 5 (Purple), 10 (Yellow), 15 (Green), 20 (Blue)
-            if (gap >= 20) card.classList.add('status-blue');
-            else if (gap >= 15) card.classList.add('status-green');
-            else if (gap >= 10) card.classList.add('status-yellow');
-            else if (gap >= 5) card.classList.add('status-purple');
-            else if (gap >= 3) card.classList.add('status-red');
-            else card.classList.add('status-normal');
-        }
-
-        // Logic 2: ZONES (Cross: Red at 5, Bet at 5 IF cross active)
-        function updateCellZone(cardId, valId, gap, allowBetting) {
-            const card = document.getElementById(cardId);
-            const val = document.getElementById(valId);
-            const sub = card.querySelector('.tracker-sub'); 
-            
-            val.innerText = gap;
             card.className = "tracker-cell";
             
-            // BETTING: Starts at Gap 5 ($1) ONLY if allowBetting is true
-            let showMoney = false;
-            if (allowBetting && gap >= 5) {
-                const bet = Math.pow(2, gap - 5); // Start at 1 for gap 5
-                if (sub) {
-                    sub.innerHTML = `<span class="text-white font-bold text-lg" style="color:#fbbf24; text-shadow:0 0 5px #b45309">$${bet.toLocaleString()}</span>`;
-                    showMoney = true;
-                    card.classList.add('cross-bet-active'); 
-                }
+            let tPurple, tRed, tYellow, tGreen, tBlue;
+
+            if (isSimple) {
+                tPurple = 3; tRed = 5; tYellow = 8; tGreen = 12; tBlue = 16;
             } else {
-                if (sub) sub.innerText = "Giros";
+                tPurple = 5; tRed = 7; tYellow = 10; tGreen = 15; tBlue = 20;
             }
             
-            // COLORS: 5 (Red), 10 (Yellow), 15 (Green), 20 (Blue)
-            if (gap >= 20) card.classList.add('status-blue');
-            else if (gap >= 15) card.classList.add('status-green');
-            else if (gap >= 10) card.classList.add('status-yellow');
-            else if (gap >= 5) card.classList.add('status-red'); // Red starts at 5 for Zones
+            if (gap >= tBlue) card.classList.add('status-blue');
+            else if (gap >= tGreen) card.classList.add('status-green');
+            else if (gap >= tYellow) card.classList.add('status-yellow');
+            else if (gap >= tRed) card.classList.add('status-red');
+            else if (gap >= tPurple) card.classList.add('status-purple');
             else card.classList.add('status-normal');
-        }
-
-        // Logic 3: STANDARD (French Bets, etc. - No betting logic)
-        function updateCellStandard(cardId, valId, gap) {
-            const card = document.getElementById(cardId);
-            const val = document.getElementById(valId);
-            val.innerText = gap;
-            card.className = "tracker-cell";
-            
-            if (gap >= 20) card.classList.add('status-blue');
-            else if (gap >= 15) card.classList.add('status-green');
-            else if (gap >= 10) card.classList.add('status-yellow');
-            else if (gap >= 5) card.classList.add('status-red'); 
-            else card.classList.add('status-normal');
-        }
-
-        // --- TIMER LOGIC ---
-        let timerInterval;
-        let timeLeft = 3600; // 60 minutes
-        let isTimerRunning = false;
-
-        function toggleTimer() {
-            const btn = document.getElementById('timerBtn');
-            if (isTimerRunning) {
-                clearInterval(timerInterval);
-                isTimerRunning = false;
-                btn.classList.remove('text-yellow-400', 'border-yellow-600');
-                btn.classList.add('text-slate-400', 'border-slate-700');
-            } else {
-                if (timeLeft <= 0) timeLeft = 3600;
-                isTimerRunning = true;
-                btn.classList.remove('text-slate-400', 'border-slate-700');
-                btn.classList.add('text-yellow-400', 'border-yellow-600');
-                
-                timerInterval = setInterval(() => {
-                    timeLeft--;
-                    updateTimerDisplay();
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        isTimerRunning = false;
-                        btn.classList.remove('text-yellow-400', 'border-yellow-600');
-                        btn.classList.add('text-red-500', 'border-red-500');
-                        alert("¡Tiempo de sesión finalizado!");
-                    }
-                }, 1000);
-            }
-        }
-
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            document.getElementById('timeDisplay').innerText = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
 
         function saveState() { localStorage.setItem('roulette_ai_history', JSON.stringify(history)); }
