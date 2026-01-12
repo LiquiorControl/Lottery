@@ -20,7 +20,7 @@
             --neon-blue: #3b82f6;
             --neon-red: #ef4444;
             --neon-green: #22c55e;
-            --neon-orange: #FF5F1F; /* Naranja Fluor */
+            --neon-orange: #FF5F1F;
         }
 
         body {
@@ -106,17 +106,23 @@
 
         /* HISTORY BADGES */
         .history-badge {
-            min-width: 29px;
-            height: 29px;
+            min-width: 34px;
+            height: 34px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 0.75rem;
-            margin-right: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
+            font-weight: 800;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            transition: transform 0.2s;
+        }
+        .history-badge:first-child {
+            transform: scale(1.1);
+            border-color: var(--gold);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            z-index: 10;
         }
 
         /* TRACKER GRID */
@@ -162,17 +168,12 @@
             padding-top: 4px;
             display: flex;
             justify-content: space-between;
-            font-size: 0.7rem; /* Increased size */
+            font-size: 0.7rem;
             color: #64748b;
             font-weight: 500;
         }
         .hits-text { color: var(--gold); font-weight: 700; }
-        /* Max Stats Style */
-        .max-text { 
-            color: var(--neon-orange); 
-            font-weight: 700; 
-            text-shadow: 0 0 8px rgba(255, 95, 31, 0.4);
-        }
+        .max-text { color: var(--neon-orange); font-weight: 700; text-shadow: 0 0 8px rgba(255, 95, 31, 0.4); }
 
         /* HEATMAP STYLES */
         .status-normal { background: rgba(30, 41, 59, 0.4); }
@@ -261,14 +262,6 @@
                     <button onclick="undoLast()" class="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-300 transition border border-gray-700"><i class="fas fa-undo"></i></button>
                     <button onclick="confirmReset()" class="w-8 h-8 rounded-lg bg-red-900/30 hover:bg-red-900/50 text-red-400 flex items-center justify-center transition border border-red-900/30"><i class="fas fa-trash-alt"></i></button>
                 </div>
-            </div>
-
-            <!-- History Strip -->
-            <div class="relative bg-black/20 rounded-xl p-1.5 border border-white/5">
-                <div id="historyList" class="flex overflow-x-auto py-1 px-1 items-center h-11 scrollbar-hide gap-1.5">
-                    <span class="text-[10px] text-gray-600 w-full text-center italic">Esperando primer giro...</span>
-                </div>
-                <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0f172a] to-transparent pointer-events-none rounded-r-xl"></div>
             </div>
             
             <!-- LIVE TRACKER GRID -->
@@ -455,6 +448,17 @@
         </div>
     </div>
 
+    <!-- VERTICAL HISTORY STRIP (Moved Here) -->
+    <div class="w-16 bg-black/40 border-l border-white/5 flex flex-col h-full z-15 backdrop-blur-sm shadow-2xl">
+        <div class="p-2 border-b border-white/5 text-center bg-black/20">
+            <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest"><i class="fas fa-history text-xs"></i></span>
+        </div>
+        <div id="historyList" class="flex-1 overflow-y-auto flex flex-col items-center py-2 gap-2 scrollbar-hide">
+            <span class="text-[10px] text-gray-600 w-full text-center italic mt-4 rotate-90 whitespace-nowrap">Esperando...</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
+    </div>
+
     <!-- RIGHT PANEL: Vertical Numbers Input -->
     <div class="w-[140px] bg-black/80 border-l border-white/5 flex flex-col h-full shadow-2xl relative z-20 backdrop-blur-xl">
         <div class="p-4 border-b border-white/5 bg-black/20">
@@ -634,7 +638,7 @@
             list.innerHTML = '';
             
             if (history.length === 0) {
-                list.innerHTML = '<span class="text-[10px] text-gray-500 w-full text-center italic mt-2 opacity-50">SIN DATOS</span>';
+                list.innerHTML = '<span class="text-[10px] text-gray-500 w-full text-center italic mt-2 opacity-50 whitespace-nowrap">SIN DATOS</span>';
                 return;
             }
 
@@ -696,9 +700,7 @@
 
         function calculatePredictions() {
             if (history.length < 3) {
-                updatePredictionBox('predHot', '-');
                 updatePredictionBox('predCold', '-');
-                updatePredictionBox('predSmart', '-');
                 return;
             }
 
@@ -710,10 +712,6 @@
                 if (lastSeen[num] === -1) lastSeen[num] = idx;
             });
 
-            // HOT
-            let hotNum = 0, maxCount = -1;
-            for(let i=0; i<=36; i++) { if(counts[i] > maxCount) { maxCount = counts[i]; hotNum = i; } }
-            
             // COLD
             let coldNum = 0, maxGap = -1;
             for(let i=0; i<=36; i++) {
@@ -721,42 +719,21 @@
                 if(gap > maxGap) { maxGap = gap; coldNum = i; }
             }
 
-            // SMART (Neighbor logic)
-            const lastNum = history[0];
-            const lastIdxWheel = WHEEL_ORDER.indexOf(lastNum);
-            let neighbors = [];
-            for(let off=-2; off<=2; off++) {
-                if(off===0) continue;
-                neighbors.push(WHEEL_ORDER[(lastIdxWheel + off + 37) % 37]);
-            }
-            let smartNum = neighbors[0], smartGap = -1;
-            neighbors.forEach(n => {
-                let g = lastSeen[n] === -1 ? history.length : lastSeen[n];
-                if (g > smartGap) { smartGap = g; smartNum = n; }
-            });
-            if (history.length < 5) smartNum = neighbors[Math.floor(Math.random()*neighbors.length)];
-
-            updatePredictionBox('predHot', hotNum);
             updatePredictionBox('predCold', coldNum);
-            updatePredictionBox('predSmart', smartNum);
         }
 
         function updatePredictionBox(id, num) {
             const el = document.getElementById(id);
-            if (!el) return; // Guard clause
+            if (!el) return;
             
             el.innerText = num;
-            
-            // Remove old color classes
-            el.className = id.includes('mini') ? "prediction-number-mini" : "prediction-number"; // Handle both sizes if needed, though here we use mini
-            el.className = "prediction-number-mini text-white"; // Force reset to base + white for safety
+            el.className = "prediction-number-mini text-white";
 
             if (num === '-' || num === undefined) {
                 el.classList.add('text-gray-500');
                 return;
             }
             
-            // Premium Gradient Text based on number color
             if (num === 0) {
                 el.style.background = "-webkit-linear-gradient(#4ade80, #166534)";
                 el.style.webkitBackgroundClip = "text";
@@ -797,7 +774,6 @@
                 col3: getGap(n => COL_3.includes(n))
             };
 
-            // Double Streets Gaps (1-6, 7-12...)
             const dsGaps = {
                 ds1: getGap(n => n >= 1 && n <= 6),
                 ds2: getGap(n => n >= 7 && n <= 12),
@@ -807,7 +783,6 @@
                 ds6: getGap(n => n >= 31 && n <= 36)
             };
 
-            // Calculate Leaders
             const isRedLeader = stats.counts.red > stats.counts.black;
             const isBlackLeader = stats.counts.black > stats.counts.red;
             
@@ -824,7 +799,6 @@
             const isC2Leader = stats.counts.col2 === maxColHits && maxColHits > 0;
             const isC3Leader = stats.counts.col3 === maxColHits && maxColHits > 0;
 
-            // Update DOM
             updateCell('track-red', 'val-red', 'max-red', 'hits-red', gaps.red, stats.maxGaps.red, stats.counts.red, isRedLeader, true);
             updateCell('track-black', 'val-black', 'max-black', 'hits-black', gaps.black, stats.maxGaps.black, stats.counts.black, isBlackLeader, true);
             
@@ -839,7 +813,6 @@
             updateCell('track-col2', 'val-col2', 'max-col2', 'hits-col2', gaps.col2, stats.maxGaps.col2, stats.counts.col2, isC2Leader, false);
             updateCell('track-col3', 'val-col3', 'max-col3', 'hits-col3', gaps.col3, stats.maxGaps.col3, stats.counts.col3, isC3Leader, false);
 
-            // Update Double Streets
             updateCell('track-ds1', 'val-ds1', 'max-ds1', 'hits-ds1', dsGaps.ds1, stats.maxGaps.ds1, stats.counts.ds1, false, false);
             updateCell('track-ds2', 'val-ds2', 'max-ds2', 'hits-ds2', dsGaps.ds2, stats.maxGaps.ds2, stats.counts.ds2, false, false);
             updateCell('track-ds3', 'val-ds3', 'max-ds3', 'hits-ds3', dsGaps.ds3, stats.maxGaps.ds3, stats.counts.ds3, false, false);
@@ -880,7 +853,6 @@
                 updateMetric('col2', COL_2.includes(n));
                 updateMetric('col3', COL_3.includes(n));
 
-                // DS Metrics
                 updateMetric('ds1', n>=1 && n<=6);
                 updateMetric('ds2', n>=7 && n<=12);
                 updateMetric('ds3', n>=13 && n<=18);
@@ -917,19 +889,9 @@
             let tPurple, tRed, tYellow, tGreen, tBlue;
 
             if (isSimple) {
-                // FASTER ALERT SCALE FOR SIMPLE CHANCES
-                tPurple = 3; 
-                tRed = 5; 
-                tYellow = 8; 
-                tGreen = 12; 
-                tBlue = 16;
+                tPurple = 3; tRed = 5; tYellow = 8; tGreen = 12; tBlue = 16;
             } else {
-                // STANDARD SCALE FOR DOZENS/COLUMNS
-                tPurple = 5; 
-                tRed = 7; 
-                tYellow = 10; 
-                tGreen = 15; 
-                tBlue = 20;
+                tPurple = 5; tRed = 7; tYellow = 10; tGreen = 15; tBlue = 20;
             }
             
             if (gap >= tBlue) {
