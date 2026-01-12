@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Royale AI</title>
+    <title>Roulette Royale AI + 5x5 System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -83,35 +83,36 @@
         .bg-r-black { background: linear-gradient(135deg, #374151, #111827); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border-bottom: 2px solid #000; }
         .bg-r-green { background: linear-gradient(135deg, #15803d, #14532d); color: #86efac; text-shadow: 0 1px 2px rgba(0,0,0,0.5); border-bottom: 2px solid #052e16; }
 
-        /* PREDICTION BOXES */
-        .prediction-box {
+        /* PREDICTION BOXES (Mini Version) */
+        .prediction-box-mini {
             background: linear-gradient(160deg, #1e1b4b 0%, #0f172a 100%);
-            border: 1px solid rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(255,255,255,0.05);
             position: relative;
             overflow: hidden;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 4px;
+            text-align: center;
         }
         
-        .prediction-number {
-            font-size: 1.6rem; /* Reduced size */
+        .prediction-number-mini {
+            font-size: 1.2rem;
             font-weight: 900;
             background: -webkit-linear-gradient(#fff, #94a3b8);
             -webkit-background-clip: text;
-            text-shadow: 0 0 15px rgba(255,255,255,0.1);
-            line-height: 1.1;
+            text-shadow: 0 0 10px rgba(255,255,255,0.1);
+            line-height: 1;
         }
 
-        /* HISTORY BADGES (Reduced Size) */
+        /* HISTORY BADGES */
         .history-badge {
-            min-width: 29px; /* Reduced from 36px */
-            height: 29px;    /* Reduced from 36px */
+            min-width: 29px;
+            height: 29px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.75rem; /* Reduced font */
+            font-size: 0.75rem;
             margin-right: 5px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.4);
             border: 1px solid rgba(255,255,255,0.1);
@@ -166,27 +167,17 @@
         }
         .hits-text { color: var(--gold); font-weight: 700; }
 
-        /* HEATMAP STYLES (PREMIUM GLOWS) */
+        /* HEATMAP STYLES */
         .status-normal { background: rgba(30, 41, 59, 0.4); }
-        
         .status-purple { background: rgba(88, 28, 135, 0.2); border: 1px solid #a855f7; box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.1); }
         .status-purple .tracker-val { color: #d8b4fe; text-shadow: 0 0 10px #a855f7; }
-
         .status-red { background: rgba(127, 29, 29, 0.3); border: 1px solid #ef4444; animation: glow-red 3s infinite alternate; }
         .status-red .tracker-val { color: #fca5a5; text-shadow: 0 0 10px #ef4444; }
-
         .status-yellow { background: rgba(113, 63, 18, 0.3); border: 1px solid #eab308; box-shadow: inset 0 0 20px rgba(234, 179, 8, 0.2); }
         .status-yellow .tracker-val { color: #fde047; text-shadow: 0 0 10px #eab308; }
-
         .status-green { background: rgba(20, 83, 45, 0.4); border: 1px solid #22c55e; animation: glow-green 2s infinite alternate; }
         .status-green .tracker-val { color: #86efac; text-shadow: 0 0 15px #22c55e; }
-
-        .status-blue { 
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.6), rgba(30, 58, 138, 0.3)); 
-            border: 1px solid #3b82f6; 
-            animation: glow-blue 1.5s infinite alternate; 
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-        }
+        .status-blue { background: linear-gradient(135deg, rgba(30, 58, 138, 0.6), rgba(30, 58, 138, 0.3)); border: 1px solid #3b82f6; animation: glow-blue 1.5s infinite alternate; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
         .status-blue .tracker-val { color: #bfdbfe; text-shadow: 0 0 20px #3b82f6; }
 
         @keyframes glow-red { from { box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); } to { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); } }
@@ -194,17 +185,15 @@
         @keyframes glow-blue { from { box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); border-color: #60a5fa; } to { box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); border-color: #93c5fd; } }
 
         /* GOLD TEXT GRADIENT */
-        .text-gold-gradient {
-            background: linear-gradient(to bottom, #FDE047, #D4AF37);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-        }
+        .text-gold-gradient { background: linear-gradient(to bottom, #FDE047, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
 
         /* SCAN OVERLAY */
         #scanOverlay { background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); z-index: 100; }
         .scan-line { width: 100%; height: 2px; background: var(--neon-green); box-shadow: 0 0 15px var(--neon-green); animation: scanMove 1.5s infinite ease-in-out; }
         @keyframes scanMove { 0% { transform: translateY(-100px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(100px); opacity: 0; } }
+        
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
@@ -274,27 +263,6 @@
                 </div>
                 <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0f172a] to-transparent pointer-events-none rounded-r-xl"></div>
             </div>
-
-            <!-- AI PREDICTIONS -->
-            <div class="grid grid-cols-3 gap-2">
-                <div class="prediction-box p-2 text-center">
-                    <div class="text-[8px] uppercase text-red-400 font-black tracking-widest mb-0.5">Tendencia</div>
-                    <div id="predHot" class="prediction-number text-white">-</div>
-                    <div class="text-[7px] text-gray-500 mt-0.5 uppercase">Frecuencia</div>
-                </div>
-                
-                <div class="prediction-box p-2 text-center border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.15)] transform scale-105 z-10 bg-indigo-900/20">
-                    <div class="text-[8px] uppercase text-indigo-300 font-black tracking-widest mb-0.5">IA Target</div>
-                    <div id="predSmart" class="prediction-number text-white animate-pulse-slow">-</div>
-                    <div class="text-[7px] text-indigo-300/50 mt-0.5 uppercase">Algoritmo</div>
-                </div>
-
-                <div class="prediction-box p-2 text-center">
-                    <div class="text-[8px] uppercase text-cyan-400 font-black tracking-widest mb-0.5">Atrasado</div>
-                    <div id="predCold" class="prediction-number text-white">-</div>
-                    <div class="text-[7px] text-gray-500 mt-0.5 uppercase">Tiempo</div>
-                </div>
-            </div>
             
             <!-- LIVE TRACKER GRID -->
             <div id="trackerDashboard" class="glass-panel p-4 rounded-2xl">
@@ -302,7 +270,7 @@
                     <h3 class="text-xs text-white font-bold tracking-widest uppercase flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> Monitor en Vivo
                     </h3>
-                    <div class="text-[10px] font-mono text-gray-400">SENSIBILIDAD: <span class="text-yellow-500">ALTA</span></div>
+                    <div class="text-[10px] font-mono text-gray-400">SENSIBILIDAD: <span class="text-yellow-500">INTELIGENTE</span></div>
                 </div>
                 
                 <!-- Simple Chances -->
@@ -393,7 +361,7 @@
                     <span class="text-[9px] uppercase tracking-widest text-white">Columnas</span>
                     <div class="h-px bg-white/20 flex-1"></div>
                 </div>
-                <div class="tracker-grid">
+                <div class="tracker-grid mb-3">
                     <div id="track-col1" class="tracker-cell status-normal">
                         <span class="tracker-label">Col 1</span>
                         <span id="val-col1" class="tracker-val">0</span>
@@ -419,6 +387,45 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- NEW Double Streets (Seisenas) Tracker -->
+                <div class="flex items-center gap-2 mb-2 mt-4 opacity-50">
+                    <div class="h-px bg-white/20 flex-1"></div>
+                    <span class="text-[9px] uppercase tracking-widest text-white">Seisenas</span>
+                    <div class="h-px bg-white/20 flex-1"></div>
+                </div>
+                <div class="tracker-grid">
+                    <div id="track-ds1" class="tracker-cell status-normal">
+                        <span class="tracker-label">1-6</span>
+                        <span id="val-ds1" class="tracker-val">0</span>
+                        <div class="tracker-footer"><span class="hits-text">H: <span id="hits-ds1">0</span></span></div>
+                    </div>
+                    <div id="track-ds2" class="tracker-cell status-normal">
+                        <span class="tracker-label">7-12</span>
+                        <span id="val-ds2" class="tracker-val">0</span>
+                        <div class="tracker-footer"><span class="hits-text">H: <span id="hits-ds2">0</span></span></div>
+                    </div>
+                    <div id="track-ds3" class="tracker-cell status-normal">
+                        <span class="tracker-label">13-18</span>
+                        <span id="val-ds3" class="tracker-val">0</span>
+                        <div class="tracker-footer"><span class="hits-text">H: <span id="hits-ds3">0</span></span></div>
+                    </div>
+                    <div id="track-ds4" class="tracker-cell status-normal">
+                        <span class="tracker-label">19-24</span>
+                        <span id="val-ds4" class="tracker-val">0</span>
+                        <div class="tracker-footer"><span class="hits-text">H: <span id="hits-ds4">0</span></span></div>
+                    </div>
+                    <div id="track-ds5" class="tracker-cell status-normal">
+                        <span class="tracker-label">25-30</span>
+                        <span id="val-ds5" class="tracker-val">0</span>
+                        <div class="tracker-footer"><span class="hits-text">H: <span id="hits-ds5">0</span></span></div>
+                    </div>
+                    <div id="track-ds6" class="tracker-cell status-normal">
+                        <span class="tracker-label">31-36</span>
+                        <span id="val-ds6" class="tracker-val">0</span>
+                        <div class="tracker-footer"><span class="hits-text">H: <span id="hits-ds6">0</span></span></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -427,6 +434,14 @@
     <div class="w-[140px] bg-black/80 border-l border-white/5 flex flex-col h-full shadow-2xl relative z-20 backdrop-blur-xl">
         <div class="p-4 border-b border-white/5 bg-black/20">
             <h2 class="text-[10px] text-gray-400 font-black text-center tracking-[0.2em] uppercase">Control</h2>
+        </div>
+        
+        <!-- COMPACT PREDICTIONS (Only Atrasado) -->
+        <div class="p-2 border-b border-white/5 space-y-2 bg-black/20">
+            <div class="prediction-box-mini">
+                <div class="text-[8px] uppercase text-cyan-400 font-black tracking-widest mb-0.5">Atrasado</div>
+                <div id="predCold" class="prediction-number-mini text-white">-</div>
+            </div>
         </div>
         
         <div class="flex-1 overflow-y-auto p-2 scrollbar-hide">
@@ -703,11 +718,14 @@
 
         function updatePredictionBox(id, num) {
             const el = document.getElementById(id);
+            if (!el) return; // Guard clause
+            
             el.innerText = num;
             
             // Remove old color classes
-            el.className = "prediction-number";
-            
+            el.className = id.includes('mini') ? "prediction-number-mini" : "prediction-number"; // Handle both sizes if needed, though here we use mini
+            el.className = "prediction-number-mini text-white"; // Force reset to base + white for safety
+
             if (num === '-' || num === undefined) {
                 el.classList.add('text-gray-500');
                 return;
@@ -754,6 +772,16 @@
                 col3: getGap(n => COL_3.includes(n))
             };
 
+            // Double Streets Gaps (1-6, 7-12...)
+            const dsGaps = {
+                ds1: getGap(n => n >= 1 && n <= 6),
+                ds2: getGap(n => n >= 7 && n <= 12),
+                ds3: getGap(n => n >= 13 && n <= 18),
+                ds4: getGap(n => n >= 19 && n <= 24),
+                ds5: getGap(n => n >= 25 && n <= 30),
+                ds6: getGap(n => n >= 31 && n <= 36)
+            };
+
             // Calculate Leaders
             const isRedLeader = stats.counts.red > stats.counts.black;
             const isBlackLeader = stats.counts.black > stats.counts.red;
@@ -785,12 +813,21 @@
             updateCell('track-col1', 'val-col1', 'max-col1', 'hits-col1', gaps.col1, stats.maxGaps.col1, stats.counts.col1, isC1Leader, false);
             updateCell('track-col2', 'val-col2', 'max-col2', 'hits-col2', gaps.col2, stats.maxGaps.col2, stats.counts.col2, isC2Leader, false);
             updateCell('track-col3', 'val-col3', 'max-col3', 'hits-col3', gaps.col3, stats.maxGaps.col3, stats.counts.col3, isC3Leader, false);
+
+            // Update Double Streets
+            updateCell('track-ds1', 'val-ds1', null, 'hits-ds1', dsGaps.ds1, 0, stats.counts.ds1, false, false);
+            updateCell('track-ds2', 'val-ds2', null, 'hits-ds2', dsGaps.ds2, 0, stats.counts.ds2, false, false);
+            updateCell('track-ds3', 'val-ds3', null, 'hits-ds3', dsGaps.ds3, 0, stats.counts.ds3, false, false);
+            updateCell('track-ds4', 'val-ds4', null, 'hits-ds4', dsGaps.ds4, 0, stats.counts.ds4, false, false);
+            updateCell('track-ds5', 'val-ds5', null, 'hits-ds5', dsGaps.ds5, 0, stats.counts.ds5, false, false);
+            updateCell('track-ds6', 'val-ds6', null, 'hits-ds6', dsGaps.ds6, 0, stats.counts.ds6, false, false);
         }
 
         function calculateStats() {
             let maxGaps = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0 };
             let current = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0 };
-            let counts = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0 };
+            let counts = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0,
+                           ds1:0, ds2:0, ds3:0, ds4:0, ds5:0, ds6:0 };
             
             const reversed = history.slice().reverse();
             
@@ -817,6 +854,14 @@
                 updateMetric('col1', COL_1.includes(n));
                 updateMetric('col2', COL_2.includes(n));
                 updateMetric('col3', COL_3.includes(n));
+
+                // DS Counts
+                if(n>=1 && n<=6) counts.ds1++;
+                if(n>=7 && n<=12) counts.ds2++;
+                if(n>=13 && n<=18) counts.ds3++;
+                if(n>=19 && n<=24) counts.ds4++;
+                if(n>=25 && n<=30) counts.ds5++;
+                if(n>=31 && n<=36) counts.ds6++;
             });
             
             return { maxGaps, counts };
@@ -828,9 +873,9 @@
             const maxVal = document.getElementById(maxId);
             const hitsVal = document.getElementById(hitsId);
             
-            val.innerText = gap;
-            maxVal.innerText = maxGap;
-            hitsVal.innerText = hits;
+            if(val) val.innerText = gap;
+            if(maxVal) maxVal.innerText = maxGap;
+            if(hitsVal) hitsVal.innerText = hits;
             
             const oldBadge = card.querySelector('.leader-badge');
             if(oldBadge) oldBadge.remove();
