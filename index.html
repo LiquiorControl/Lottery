@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Royale AI + 5x5 System</title>
+    <title>Roulette Royale AI + Combo System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -192,6 +192,25 @@
         @keyframes glow-green { from { box-shadow: 0 0 5px rgba(34, 197, 94, 0.2); } to { box-shadow: 0 0 20px rgba(34, 197, 94, 0.6); } }
         @keyframes glow-blue { from { box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); border-color: #60a5fa; } to { box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); border-color: #93c5fd; } }
 
+        /* --- NUEVO ESTILO: COMBO NARANJA --- */
+        .status-orange-combo {
+            background: rgba(255, 95, 31, 0.25) !important;
+            border: 2px solid #FF5F1F !important;
+            box-shadow: 0 0 25px rgba(255, 95, 31, 0.6), inset 0 0 10px rgba(255, 95, 31, 0.4) !important;
+            animation: pulse-orange 0.8s infinite alternate !important;
+            z-index: 50;
+        }
+
+        .status-orange-combo .tracker-val {
+            color: #FF5F1F !important;
+            text-shadow: 0 0 15px #FF5F1F;
+        }
+
+        @keyframes pulse-orange {
+            from { transform: scale(1); box-shadow: 0 0 10px rgba(255, 95, 31, 0.4); }
+            to { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 95, 31, 0.9); }
+        }
+
         /* GOLD TEXT GRADIENT */
         .text-gold-gradient { background: linear-gradient(to bottom, #FDE047, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
 
@@ -207,10 +226,8 @@
 <body class="h-screen flex overflow-hidden">
     <div class="noise-bg"></div>
 
-    <!-- HIDDEN INPUT FOR CAMERA -->
     <input type="file" id="cameraInput" accept="image/*" style="display:none" onchange="processImage(this)">
 
-    <!-- TEXT IMPORT MODAL -->
     <div id="textModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="glass-panel p-6 rounded-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
@@ -228,7 +245,6 @@
         </div>
     </div>
 
-    <!-- SCAN LOADING OVERLAY -->
     <div id="scanOverlay" class="hidden fixed inset-0 flex flex-col items-center justify-center p-6 text-center">
         <div class="w-20 h-20 border border-green-500/50 rounded-2xl relative overflow-hidden mb-6 flex items-center justify-center bg-green-900/10 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
             <i class="fas fa-microchip text-4xl text-green-500"></i>
@@ -239,12 +255,9 @@
         <p id="scanStatus" class="text-[10px] text-gray-500 font-mono">Iniciando motor neuronal...</p>
     </div>
 
-    <!-- LEFT PANEL: Dashboard -->
     <div class="flex-1 flex flex-col h-full overflow-hidden relative z-10">
-        <!-- Scrollable Container -->
         <div class="flex-1 overflow-y-auto p-3 space-y-4">
             
-            <!-- Header -->
             <div class="flex justify-between items-center bg-black/40 p-3 rounded-2xl border border-white/5 backdrop-blur-md">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-700 flex items-center justify-center shadow-lg shadow-yellow-900/50">
@@ -264,7 +277,6 @@
                 </div>
             </div>
             
-            <!-- LIVE TRACKER GRID -->
             <div id="trackerDashboard" class="glass-panel p-4 rounded-2xl">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xs text-white font-bold tracking-widest uppercase flex items-center gap-2">
@@ -273,7 +285,6 @@
                     <div class="text-[10px] font-mono text-gray-400">SENSIBILIDAD: <span class="text-yellow-500">INTELIGENTE</span></div>
                 </div>
                 
-                <!-- Simple Chances -->
                 <div class="tracker-grid mb-3">
                     <div id="track-red" class="tracker-cell status-normal">
                         <span class="tracker-label text-red-400">Rojo</span>
@@ -292,7 +303,6 @@
                         </div>
                     </div>
                     
-                    <!-- RELOJ -->
                     <div class="tracker-cell bg-black/40 border border-white/10 flex flex-col items-center justify-center">
                         <span class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Hora</span>
                         <span id="liveClock" class="text-base font-mono font-bold text-white tracking-widest">--:--</span>
@@ -315,14 +325,12 @@
                         </div>
                     </div>
                     
-                    <!-- TIMER -->
                     <div class="tracker-cell bg-black/40 border border-white/10 flex flex-col items-center justify-center cursor-pointer active:bg-white/5 transition" onclick="resetTimer()">
                         <span class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Sesión</span>
                         <span id="sessionTimer" class="text-base font-mono font-bold text-yellow-500 tracking-widest">60:00</span>
                     </div>
                 </div>
 
-                <!-- Dozens -->
                 <div class="flex items-center gap-2 mb-2 mt-4 opacity-50">
                     <div class="h-px bg-white/20 flex-1"></div>
                     <span class="text-[9px] uppercase tracking-widest text-white">Docenas</span>
@@ -355,7 +363,6 @@
                     </div>
                 </div>
 
-                <!-- Columns -->
                 <div class="flex items-center gap-2 mb-2 mt-4 opacity-50">
                     <div class="h-px bg-white/20 flex-1"></div>
                     <span class="text-[9px] uppercase tracking-widest text-white">Columnas</span>
@@ -388,7 +395,6 @@
                     </div>
                 </div>
 
-                <!-- NEW Double Streets (Seisenas) Tracker -->
                 <div class="flex items-center gap-2 mb-2 mt-4 opacity-50">
                     <div class="h-px bg-white/20 flex-1"></div>
                     <span class="text-[9px] uppercase tracking-widest text-white">Seisenas</span>
@@ -448,7 +454,6 @@
         </div>
     </div>
 
-    <!-- VERTICAL HISTORY STRIP (Moved Here) -->
     <div class="w-16 bg-black/40 border-l border-white/5 flex flex-col h-full z-15 backdrop-blur-sm shadow-2xl">
         <div class="p-2 border-b border-white/5 text-center bg-black/20">
             <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest"><i class="fas fa-history text-xs"></i></span>
@@ -459,13 +464,11 @@
         <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
     </div>
 
-    <!-- RIGHT PANEL: Vertical Numbers Input -->
     <div class="w-[140px] bg-black/80 border-l border-white/5 flex flex-col h-full shadow-2xl relative z-20 backdrop-blur-xl">
         <div class="p-4 border-b border-white/5 bg-black/20">
             <h2 class="text-[10px] text-gray-400 font-black text-center tracking-[0.2em] uppercase">Control</h2>
         </div>
         
-        <!-- COMPACT PREDICTIONS (Only Atrasado) -->
         <div class="p-2 border-b border-white/5 space-y-2 bg-black/20">
             <div class="prediction-box-mini">
                 <div class="text-[8px] uppercase text-cyan-400 font-black tracking-widest mb-0.5">Atrasado</div>
@@ -474,10 +477,8 @@
         </div>
         
         <div class="flex-1 overflow-y-auto p-2 scrollbar-hide">
-            <!-- 0 Button -->
             <button onclick="addNumber(0)" class="num-btn bg-r-green w-full h-10 mb-2 !aspect-auto text-lg hover:brightness-110">0</button>
             
-            <!-- 1-36 Grid (3 Cols) -->
             <div id="numbersGrid" class="grid grid-cols-3 gap-1.5 pb-4"></div>
         </div>
 
@@ -487,7 +488,6 @@
         </div>
     </div>
 
-    <!-- Reset Modal -->
     <div id="resetModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
         <div class="glass-panel p-6 rounded-2xl max-w-sm w-full border border-white/10 shadow-2xl transform scale-100 transition-all">
             <h3 class="text-lg font-bold text-white mb-2 text-center">¿Nueva Sesión?</h3>
@@ -783,9 +783,9 @@
                 ds6: getGap(n => n >= 31 && n <= 36)
             };
 
+            // Calculate leaders for simple update
             const isRedLeader = stats.counts.red > stats.counts.black;
             const isBlackLeader = stats.counts.black > stats.counts.red;
-            
             const isEvenLeader = stats.counts.even > stats.counts.odd;
             const isOddLeader = stats.counts.odd > stats.counts.even;
 
@@ -799,9 +799,9 @@
             const isC2Leader = stats.counts.col2 === maxColHits && maxColHits > 0;
             const isC3Leader = stats.counts.col3 === maxColHits && maxColHits > 0;
 
+            // Update cells normally first
             updateCell('track-red', 'val-red', 'max-red', 'hits-red', gaps.red, stats.maxGaps.red, stats.counts.red, isRedLeader, true);
             updateCell('track-black', 'val-black', 'max-black', 'hits-black', gaps.black, stats.maxGaps.black, stats.counts.black, isBlackLeader, true);
-            
             updateCell('track-even', 'val-even', 'max-even', 'hits-even', gaps.even, stats.maxGaps.even, stats.counts.even, isEvenLeader, true);
             updateCell('track-odd', 'val-odd', 'max-odd', 'hits-odd', gaps.odd, stats.maxGaps.odd, stats.counts.odd, isOddLeader, true);
             
@@ -819,6 +819,43 @@
             updateCell('track-ds4', 'val-ds4', 'max-ds4', 'hits-ds4', dsGaps.ds4, stats.maxGaps.ds4, stats.counts.ds4, false, false);
             updateCell('track-ds5', 'val-ds5', 'max-ds5', 'hits-ds5', dsGaps.ds5, stats.maxGaps.ds5, stats.counts.ds5, false, false);
             updateCell('track-ds6', 'val-ds6', 'max-ds6', 'hits-ds6', dsGaps.ds6, stats.maxGaps.ds6, stats.counts.ds6, false, false);
+
+            // ============================================================
+            // LOGICA DE COMBO NARANJA (CRUCE DE COLORES Y PARES)
+            // ============================================================
+            
+            // A. Limpiamos el estado naranja anterior
+            ['track-red', 'track-black', 'track-even', 'track-odd'].forEach(id => {
+                document.getElementById(id).classList.remove('status-orange-combo');
+            });
+
+            const umbralCombo = 2; // Cantidad de atrasos para activar la alerta
+
+            // B. Verificamos las 4 combinaciones posibles:
+
+            // CASO 1: Rojo y Par están atrasados a la vez
+            if (gaps.red >= umbralCombo && gaps.even >= umbralCombo) {
+                document.getElementById('track-red').classList.add('status-orange-combo');
+                document.getElementById('track-even').classList.add('status-orange-combo');
+            }
+
+            // CASO 2: Rojo e Impar están atrasados a la vez
+            if (gaps.red >= umbralCombo && gaps.odd >= umbralCombo) {
+                document.getElementById('track-red').classList.add('status-orange-combo');
+                document.getElementById('track-odd').classList.add('status-orange-combo');
+            }
+
+            // CASO 3: Negro y Par están atrasados a la vez
+            if (gaps.black >= umbralCombo && gaps.even >= umbralCombo) {
+                document.getElementById('track-black').classList.add('status-orange-combo');
+                document.getElementById('track-even').classList.add('status-orange-combo');
+            }
+
+            // CASO 4: Negro e Impar están atrasados a la vez
+            if (gaps.black >= umbralCombo && gaps.odd >= umbralCombo) {
+                document.getElementById('track-black').classList.add('status-orange-combo');
+                document.getElementById('track-odd').classList.add('status-orange-combo');
+            }
         }
 
         function calculateStats() {
