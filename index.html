@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Royale AI + Combo System</title>
+    <title>Roulette Royale AI + Super Combos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -188,11 +188,7 @@
         .status-blue { background: linear-gradient(135deg, rgba(30, 58, 138, 0.6), rgba(30, 58, 138, 0.3)); border: 1px solid #3b82f6; animation: glow-blue 1.5s infinite alternate; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
         .status-blue .tracker-val { color: #bfdbfe; text-shadow: 0 0 20px #3b82f6; }
 
-        @keyframes glow-red { from { box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); } to { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); } }
-        @keyframes glow-green { from { box-shadow: 0 0 5px rgba(34, 197, 94, 0.2); } to { box-shadow: 0 0 20px rgba(34, 197, 94, 0.6); } }
-        @keyframes glow-blue { from { box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); border-color: #60a5fa; } to { box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); border-color: #93c5fd; } }
-
-        /* --- NUEVO ESTILO: COMBO NARANJA --- */
+        /* --- NUEVO ESTILO: COMBO NARANJA (SUPERIOR) --- */
         .status-orange-combo {
             background: rgba(255, 95, 31, 0.25) !important;
             border: 2px solid #FF5F1F !important;
@@ -783,7 +779,6 @@
                 ds6: getGap(n => n >= 31 && n <= 36)
             };
 
-            // Calculate leaders for simple update
             const isRedLeader = stats.counts.red > stats.counts.black;
             const isBlackLeader = stats.counts.black > stats.counts.red;
             const isEvenLeader = stats.counts.even > stats.counts.odd;
@@ -799,7 +794,7 @@
             const isC2Leader = stats.counts.col2 === maxColHits && maxColHits > 0;
             const isC3Leader = stats.counts.col3 === maxColHits && maxColHits > 0;
 
-            // Update cells normally first
+            // Update cells normally
             updateCell('track-red', 'val-red', 'max-red', 'hits-red', gaps.red, stats.maxGaps.red, stats.counts.red, isRedLeader, true);
             updateCell('track-black', 'val-black', 'max-black', 'hits-black', gaps.black, stats.maxGaps.black, stats.counts.black, isBlackLeader, true);
             updateCell('track-even', 'val-even', 'max-even', 'hits-even', gaps.even, stats.maxGaps.even, stats.counts.even, isEvenLeader, true);
@@ -821,40 +816,60 @@
             updateCell('track-ds6', 'val-ds6', 'max-ds6', 'hits-ds6', dsGaps.ds6, stats.maxGaps.ds6, stats.counts.ds6, false, false);
 
             // ============================================================
-            // LOGICA DE COMBO NARANJA (CRUCE DE COLORES Y PARES)
+            // SISTEMA DE ALERTAS (COMBO ORANGE)
             // ============================================================
             
-            // A. Limpiamos el estado naranja anterior
-            ['track-red', 'track-black', 'track-even', 'track-odd'].forEach(id => {
-                document.getElementById(id).classList.remove('status-orange-combo');
+            // 1. LIMPIAR ALERTAS PREVIAS
+            const allIds = [
+                'track-red', 'track-black', 'track-even', 'track-odd',
+                'track-doz1', 'track-doz2', 'track-doz3',
+                'track-col1', 'track-col2', 'track-col3'
+            ];
+            allIds.forEach(id => document.getElementById(id).classList.remove('status-orange-combo'));
+
+            const umbralCombo = 2; // Nivel de atraso para activar
+
+            // 2. ALERTA SIMPLE: COLOR + PAR/IMPAR
+            if (gaps.red >= umbralCombo && gaps.even >= umbralCombo) { markOrange('track-red', 'track-even'); }
+            if (gaps.red >= umbralCombo && gaps.odd >= umbralCombo) { markOrange('track-red', 'track-odd'); }
+            if (gaps.black >= umbralCombo && gaps.even >= umbralCombo) { markOrange('track-black', 'track-even'); }
+            if (gaps.black >= umbralCombo && gaps.odd >= umbralCombo) { markOrange('track-black', 'track-odd'); }
+
+            // 3. ALERTA TRIPLE: COLUMNAS + DOCENAS (CRUCE DE 3)
+            // Definimos arrays para iterar fácil
+            const cIds = ['track-col1', 'track-col2', 'track-col3'];
+            const dIds = ['track-doz1', 'track-doz2', 'track-doz3'];
+            const cGaps = [gaps.col1, gaps.col2, gaps.col3];
+            const dGaps = [gaps.doz1, gaps.doz2, gaps.doz3];
+            const pairs = [[0,1], [0,2], [1,2]]; // Pares posibles (Indices: 0=1ra, 1=2da, 2=3ra)
+
+            // A. Caso: 2 Columnas + 1 Docena
+            pairs.forEach(p => {
+                if (cGaps[p[0]] >= umbralCombo && cGaps[p[1]] >= umbralCombo) {
+                    // Si las dos columnas del par están atrasadas, chequeamos cada docena
+                    for (let i = 0; i < 3; i++) {
+                        if (dGaps[i] >= umbralCombo) {
+                            markOrange(cIds[p[0]], cIds[p[1]], dIds[i]);
+                        }
+                    }
+                }
             });
 
-            const umbralCombo = 2; // Cantidad de atrasos para activar la alerta
+            // B. Caso: 2 Docenas + 1 Columna
+            pairs.forEach(p => {
+                if (dGaps[p[0]] >= umbralCombo && dGaps[p[1]] >= umbralCombo) {
+                    // Si las dos docenas del par están atrasadas, chequeamos cada columna
+                    for (let i = 0; i < 3; i++) {
+                        if (cGaps[i] >= umbralCombo) {
+                            markOrange(dIds[p[0]], dIds[p[1]], cIds[i]);
+                        }
+                    }
+                }
+            });
 
-            // B. Verificamos las 4 combinaciones posibles:
-
-            // CASO 1: Rojo y Par están atrasados a la vez
-            if (gaps.red >= umbralCombo && gaps.even >= umbralCombo) {
-                document.getElementById('track-red').classList.add('status-orange-combo');
-                document.getElementById('track-even').classList.add('status-orange-combo');
-            }
-
-            // CASO 2: Rojo e Impar están atrasados a la vez
-            if (gaps.red >= umbralCombo && gaps.odd >= umbralCombo) {
-                document.getElementById('track-red').classList.add('status-orange-combo');
-                document.getElementById('track-odd').classList.add('status-orange-combo');
-            }
-
-            // CASO 3: Negro y Par están atrasados a la vez
-            if (gaps.black >= umbralCombo && gaps.even >= umbralCombo) {
-                document.getElementById('track-black').classList.add('status-orange-combo');
-                document.getElementById('track-even').classList.add('status-orange-combo');
-            }
-
-            // CASO 4: Negro e Impar están atrasados a la vez
-            if (gaps.black >= umbralCombo && gaps.odd >= umbralCombo) {
-                document.getElementById('track-black').classList.add('status-orange-combo');
-                document.getElementById('track-odd').classList.add('status-orange-combo');
+            // Función Helper para marcar
+            function markOrange(...ids) {
+                ids.forEach(id => document.getElementById(id).classList.add('status-orange-combo'));
             }
         }
 
