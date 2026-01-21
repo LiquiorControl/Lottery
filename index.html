@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Royale AI + Super Combos</title>
+    <title>Roulette Royale AI + Recovery System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -188,7 +188,7 @@
         .status-blue { background: linear-gradient(135deg, rgba(30, 58, 138, 0.6), rgba(30, 58, 138, 0.3)); border: 1px solid #3b82f6; animation: glow-blue 1.5s infinite alternate; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
         .status-blue .tracker-val { color: #bfdbfe; text-shadow: 0 0 20px #3b82f6; }
 
-        /* --- NUEVO ESTILO: COMBO NARANJA (SUPERIOR) --- */
+        /* --- COMBO NARANJA: ALERTA DE CRUCE --- */
         .status-orange-combo {
             background: rgba(255, 95, 31, 0.25) !important;
             border: 2px solid #FF5F1F !important;
@@ -207,6 +207,19 @@
             to { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 95, 31, 0.9); }
         }
 
+        /* --- PANEL DE RECUPERACIÓN --- */
+        .panel-active {
+            opacity: 1 !important;
+            filter: none !important;
+            border-color: #FF5F1F !important;
+            box-shadow: 0 0 20px rgba(255, 95, 31, 0.15), inset 0 0 10px rgba(255, 95, 31, 0.05);
+        }
+        .flash-update { animation: flash-white 0.5s ease-out; }
+        @keyframes flash-white {
+            0% { background-color: rgba(255, 255, 255, 0.3); transform: scale(1.02); }
+            100% { background-color: transparent; transform: scale(1); }
+        }
+
         /* GOLD TEXT GRADIENT */
         .text-gold-gradient { background: linear-gradient(to bottom, #FDE047, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
 
@@ -214,9 +227,6 @@
         #scanOverlay { background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); z-index: 100; }
         .scan-line { width: 100%; height: 2px; background: var(--neon-green); box-shadow: 0 0 15px var(--neon-green); animation: scanMove 1.5s infinite ease-in-out; }
         @keyframes scanMove { 0% { transform: translateY(-100px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(100px); opacity: 0; } }
-        
-        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
@@ -271,6 +281,23 @@
                     <button onclick="undoLast()" class="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-300 transition border border-gray-700"><i class="fas fa-undo"></i></button>
                     <button onclick="confirmReset()" class="w-8 h-8 rounded-lg bg-red-900/30 hover:bg-red-900/50 text-red-400 flex items-center justify-center transition border border-red-900/30"><i class="fas fa-trash-alt"></i></button>
                 </div>
+            </div>
+
+            <div id="orangeRecoveryPanel" class="glass-panel p-3 rounded-2xl mb-3 flex items-center justify-between border-l-4 border-orange-500 relative overflow-hidden transition-all duration-500 opacity-50 grayscale">
+                <div class="z-10">
+                    <h3 class="text-[10px] text-orange-400 font-bold tracking-widest uppercase mb-1">
+                        <i class="fas fa-fire-extinguisher mr-1"></i> Recuperación
+                    </h3>
+                    <p class="text-[9px] text-gray-400">Promedio de giros para apagar alerta</p>
+                </div>
+                <div class="z-10 text-right flex flex-col items-end">
+                    <div class="flex items-baseline gap-1">
+                        <span id="avgRecoveryVal" class="text-2xl font-black text-white tracking-tighter">--</span>
+                        <span class="text-[9px] text-orange-500 font-bold">GIROS</span>
+                    </div>
+                    <span id="recoveryCount" class="text-[8px] text-gray-500 font-mono">Basado en 0 eventos</span>
+                </div>
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-orange-500/10 rounded-full blur-xl pointer-events-none"></div>
             </div>
             
             <div id="trackerDashboard" class="glass-panel p-4 rounded-2xl">
@@ -494,15 +521,12 @@
             </div>
         </div>
     </div>
-
     <script>
         // --- Data & Config ---
         const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
         const COL_1 = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34];
         const COL_2 = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35];
         const COL_3 = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36];
-
-        const WHEEL_ORDER = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
 
         let history = [];
         let timerInterval;
@@ -515,6 +539,7 @@
             startTimer();
         };
 
+        // --- RELOJ Y TEMPORIZADOR ---
         function startClock() {
             setInterval(() => {
                 const now = new Date();
@@ -555,6 +580,7 @@
             startTimer();
         }
 
+        // --- INTERFAZ Y EVENTOS ---
         function renderGrid() {
             const grid = document.getElementById('numbersGrid');
             grid.innerHTML = '';
@@ -587,8 +613,8 @@
             resetTimer();
             closeModal(); 
         }
-        
-        // --- TEXT MODAL FUNCTIONS ---
+
+        // --- IMPORTACIÓN DE TEXTO ---
         function openTextModal() {
             document.getElementById('textModal').classList.remove('hidden');
             document.getElementById('bulkTextInput').focus();
@@ -622,11 +648,13 @@
             return RED_NUMBERS.includes(num) ? 'bg-r-red' : 'bg-r-black';
         }
 
+        // --- ACTUALIZACIÓN DE UI PRINCIPAL ---
         function updateUI() {
             renderHistory();
             document.getElementById('totalSpins').innerText = history.length;
             calculatePredictions();
             updateDashboard();
+            calculateRecoveryAverage(); // Calculamos el promedio de recuperación
         }
 
         function renderHistory() {
@@ -646,7 +674,7 @@
             });
         }
 
-        // --- IMAGE OCR PROCESSING ---
+        // --- PROCESAMIENTO OCR (Tesseract) ---
         function processImage(input) {
             if (!input.files || !input.files[0]) return;
             const file = input.files[0];
@@ -693,43 +721,35 @@
             });
         }
 
-
+        // --- LÓGICA DE PREDICCIÓN SIMPLE ---
         function calculatePredictions() {
             if (history.length < 3) {
                 updatePredictionBox('predCold', '-');
                 return;
             }
-
             let counts = Array(37).fill(0);
             let lastSeen = Array(37).fill(-1);
-            
             history.forEach((num, idx) => {
                 counts[num]++;
                 if (lastSeen[num] === -1) lastSeen[num] = idx;
             });
-
-            // COLD
             let coldNum = 0, maxGap = -1;
             for(let i=0; i<=36; i++) {
                 let gap = lastSeen[i] === -1 ? history.length : lastSeen[i];
                 if(gap > maxGap) { maxGap = gap; coldNum = i; }
             }
-
             updatePredictionBox('predCold', coldNum);
         }
 
         function updatePredictionBox(id, num) {
             const el = document.getElementById(id);
             if (!el) return;
-            
             el.innerText = num;
             el.className = "prediction-number-mini text-white";
-
             if (num === '-' || num === undefined) {
                 el.classList.add('text-gray-500');
                 return;
             }
-            
             if (num === 0) {
                 el.style.background = "-webkit-linear-gradient(#4ade80, #166534)";
                 el.style.webkitBackgroundClip = "text";
@@ -745,6 +765,7 @@
             }
         }
 
+        // --- DASHBOARD CENTRAL ---
         function updateDashboard() {
             const stats = calculateStats();
 
@@ -779,11 +800,7 @@
                 ds6: getGap(n => n >= 31 && n <= 36)
             };
 
-            const isRedLeader = stats.counts.red > stats.counts.black;
-            const isBlackLeader = stats.counts.black > stats.counts.red;
-            const isEvenLeader = stats.counts.even > stats.counts.odd;
-            const isOddLeader = stats.counts.odd > stats.counts.even;
-
+            // Calculate leaders for simple update
             const maxDozHits = Math.max(stats.counts.doz1, stats.counts.doz2, stats.counts.doz3);
             const isD1Leader = stats.counts.doz1 === maxDozHits && maxDozHits > 0;
             const isD2Leader = stats.counts.doz2 === maxDozHits && maxDozHits > 0;
@@ -794,11 +811,11 @@
             const isC2Leader = stats.counts.col2 === maxColHits && maxColHits > 0;
             const isC3Leader = stats.counts.col3 === maxColHits && maxColHits > 0;
 
-            // Update cells normally
-            updateCell('track-red', 'val-red', 'max-red', 'hits-red', gaps.red, stats.maxGaps.red, stats.counts.red, isRedLeader, true);
-            updateCell('track-black', 'val-black', 'max-black', 'hits-black', gaps.black, stats.maxGaps.black, stats.counts.black, isBlackLeader, true);
-            updateCell('track-even', 'val-even', 'max-even', 'hits-even', gaps.even, stats.maxGaps.even, stats.counts.even, isEvenLeader, true);
-            updateCell('track-odd', 'val-odd', 'max-odd', 'hits-odd', gaps.odd, stats.maxGaps.odd, stats.counts.odd, isOddLeader, true);
+            // Update standard visuals
+            updateCell('track-red', 'val-red', 'max-red', 'hits-red', gaps.red, stats.maxGaps.red, stats.counts.red, stats.counts.red > stats.counts.black, true);
+            updateCell('track-black', 'val-black', 'max-black', 'hits-black', gaps.black, stats.maxGaps.black, stats.counts.black, stats.counts.black > stats.counts.red, true);
+            updateCell('track-even', 'val-even', 'max-even', 'hits-even', gaps.even, stats.maxGaps.even, stats.counts.even, stats.counts.even > stats.counts.odd, true);
+            updateCell('track-odd', 'val-odd', 'max-odd', 'hits-odd', gaps.odd, stats.maxGaps.odd, stats.counts.odd, stats.counts.odd > stats.counts.even, true);
             
             updateCell('track-doz1', 'val-doz1', 'max-doz1', 'hits-doz1', gaps.doz1, stats.maxGaps.doz1, stats.counts.doz1, isD1Leader, false);
             updateCell('track-doz2', 'val-doz2', 'max-doz2', 'hits-doz2', gaps.doz2, stats.maxGaps.doz2, stats.counts.doz2, isD2Leader, false);
@@ -829,6 +846,10 @@
 
             const umbralCombo = 2; // Nivel de atraso para activar
 
+            function markOrange(...ids) {
+                ids.forEach(id => document.getElementById(id).classList.add('status-orange-combo'));
+            }
+
             // 2. ALERTA SIMPLE: COLOR + PAR/IMPAR
             if (gaps.red >= umbralCombo && gaps.even >= umbralCombo) { markOrange('track-red', 'track-even'); }
             if (gaps.red >= umbralCombo && gaps.odd >= umbralCombo) { markOrange('track-red', 'track-odd'); }
@@ -836,21 +857,17 @@
             if (gaps.black >= umbralCombo && gaps.odd >= umbralCombo) { markOrange('track-black', 'track-odd'); }
 
             // 3. ALERTA TRIPLE: COLUMNAS + DOCENAS (CRUCE DE 3)
-            // Definimos arrays para iterar fácil
             const cIds = ['track-col1', 'track-col2', 'track-col3'];
             const dIds = ['track-doz1', 'track-doz2', 'track-doz3'];
             const cGaps = [gaps.col1, gaps.col2, gaps.col3];
             const dGaps = [gaps.doz1, gaps.doz2, gaps.doz3];
-            const pairs = [[0,1], [0,2], [1,2]]; // Pares posibles (Indices: 0=1ra, 1=2da, 2=3ra)
+            const pairs = [[0,1], [0,2], [1,2]];
 
             // A. Caso: 2 Columnas + 1 Docena
             pairs.forEach(p => {
                 if (cGaps[p[0]] >= umbralCombo && cGaps[p[1]] >= umbralCombo) {
-                    // Si las dos columnas del par están atrasadas, chequeamos cada docena
                     for (let i = 0; i < 3; i++) {
-                        if (dGaps[i] >= umbralCombo) {
-                            markOrange(cIds[p[0]], cIds[p[1]], dIds[i]);
-                        }
+                        if (dGaps[i] >= umbralCombo) markOrange(cIds[p[0]], cIds[p[1]], dIds[i]);
                     }
                 }
             });
@@ -858,42 +875,104 @@
             // B. Caso: 2 Docenas + 1 Columna
             pairs.forEach(p => {
                 if (dGaps[p[0]] >= umbralCombo && dGaps[p[1]] >= umbralCombo) {
-                    // Si las dos docenas del par están atrasadas, chequeamos cada columna
                     for (let i = 0; i < 3; i++) {
-                        if (cGaps[i] >= umbralCombo) {
-                            markOrange(dIds[p[0]], dIds[p[1]], cIds[i]);
-                        }
+                        if (cGaps[i] >= umbralCombo) markOrange(dIds[p[0]], dIds[p[1]], cIds[i]);
                     }
                 }
             });
+        }
 
-            // Función Helper para marcar
-            function markOrange(...ids) {
-                ids.forEach(id => document.getElementById(id).classList.add('status-orange-combo'));
+        // --- CALCULO DE PROMEDIO DE RECUPERACIÓN ---
+        function calculateRecoveryAverage() {
+            if (history.length < 5) {
+                document.getElementById('avgRecoveryVal').innerText = "--";
+                document.getElementById('orangeRecoveryPanel').classList.remove('panel-active');
+                return;
+            }
+
+            let simGaps = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0 };
+            let orangeDurations = [];
+            let currentStreak = 0;
+
+            for (let i = history.length - 1; i >= 0; i--) {
+                let n = history[i];
+                if (n === 0) continue; 
+
+                updateSimGap(simGaps, 'red', RED_NUMBERS.includes(n));
+                updateSimGap(simGaps, 'black', !RED_NUMBERS.includes(n));
+                updateSimGap(simGaps, 'even', n % 2 === 0);
+                updateSimGap(simGaps, 'odd', n % 2 !== 0);
+                updateSimGap(simGaps, 'doz1', n >= 1 && n <= 12);
+                updateSimGap(simGaps, 'doz2', n >= 13 && n <= 24);
+                updateSimGap(simGaps, 'doz3', n >= 25 && n <= 36);
+                updateSimGap(simGaps, 'col1', COL_1.includes(n));
+                updateSimGap(simGaps, 'col2', COL_2.includes(n));
+                updateSimGap(simGaps, 'col3', COL_3.includes(n));
+
+                if (checkOrangeConditionSim(simGaps)) {
+                    currentStreak++;
+                } else {
+                    if (currentStreak > 0) {
+                        orangeDurations.push(currentStreak);
+                        currentStreak = 0;
+                    }
+                }
+            }
+            if (currentStreak > 0) orangeDurations.push(currentStreak);
+
+            if (orangeDurations.length > 0) {
+                let sum = orangeDurations.reduce((a, b) => a + b, 0);
+                let avg = (sum / orangeDurations.length).toFixed(1);
+                const valEl = document.getElementById('avgRecoveryVal');
+                const countEl = document.getElementById('recoveryCount');
+                const panel = document.getElementById('orangeRecoveryPanel');
+                
+                valEl.innerText = avg;
+                countEl.innerText = `Basado en ${orangeDurations.length} eventos`;
+                panel.classList.add('panel-active');
+                panel.classList.remove('flash-update');
+                void panel.offsetWidth; 
+                panel.classList.add('flash-update');
             }
         }
 
+        function updateSimGap(obj, key, hit) {
+            if (hit) obj[key] = 0;
+            else obj[key]++;
+        }
+
+        function checkOrangeConditionSim(g) {
+            const T = 2; 
+            // Simples
+            if (g.red >= T && g.even >= T) return true;
+            if (g.red >= T && g.odd >= T) return true;
+            if (g.black >= T && g.even >= T) return true;
+            if (g.black >= T && g.odd >= T) return true;
+            
+            // Complejas
+            const c = [g.col1, g.col2, g.col3];
+            const d = [g.doz1, g.doz2, g.doz3];
+            let colsOver = c.filter(x => x >= T).length;
+            let dozsOver = d.filter(x => x >= T).length;
+            
+            if (colsOver >= 2 && dozsOver >= 1) return true;
+            if (dozsOver >= 2 && colsOver >= 1) return true;
+            return false;
+        }
+
+        // --- ESTADÍSTICAS GENERALES ---
         function calculateStats() {
             let maxGaps = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0, ds1:0, ds2:0, ds3:0, ds4:0, ds5:0, ds6:0 };
             let current = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0, ds1:0, ds2:0, ds3:0, ds4:0, ds5:0, ds6:0 };
-            let counts = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0,
-                           ds1:0, ds2:0, ds3:0, ds4:0, ds5:0, ds6:0 };
+            let counts = { red:0, black:0, even:0, odd:0, doz1:0, doz2:0, doz3:0, col1:0, col2:0, col3:0, ds1:0, ds2:0, ds3:0, ds4:0, ds5:0, ds6:0 };
             
             const reversed = history.slice().reverse();
-            
             reversed.forEach(n => {
                 if(n === 0) return; 
-
                 const updateMetric = (key, hit) => {
-                    if (hit) {
-                        current[key] = 0;
-                        counts[key]++;
-                    } else {
-                        current[key]++;
-                        if (current[key] > maxGaps[key]) maxGaps[key] = current[key];
-                    }
+                    if (hit) { current[key] = 0; counts[key]++; } 
+                    else { current[key]++; if (current[key] > maxGaps[key]) maxGaps[key] = current[key]; }
                 };
-
                 updateMetric('red', RED_NUMBERS.includes(n));
                 updateMetric('black', !RED_NUMBERS.includes(n));
                 updateMetric('even', n % 2 === 0);
@@ -904,7 +983,6 @@
                 updateMetric('col1', COL_1.includes(n));
                 updateMetric('col2', COL_2.includes(n));
                 updateMetric('col3', COL_3.includes(n));
-
                 updateMetric('ds1', n>=1 && n<=6);
                 updateMetric('ds2', n>=7 && n<=12);
                 updateMetric('ds3', n>=13 && n<=18);
@@ -912,7 +990,6 @@
                 updateMetric('ds5', n>=25 && n<=30);
                 updateMetric('ds6', n>=31 && n<=36);
             });
-            
             return { maxGaps, counts };
         }
 
@@ -937,28 +1014,16 @@
             }
             
             card.className = "tracker-cell";
-            
             let tPurple, tRed, tYellow, tGreen, tBlue;
-
-            if (isSimple) {
-                tPurple = 3; tRed = 5; tYellow = 8; tGreen = 12; tBlue = 16;
-            } else {
-                tPurple = 5; tRed = 7; tYellow = 10; tGreen = 15; tBlue = 20;
-            }
+            if (isSimple) { tPurple = 3; tRed = 5; tYellow = 8; tGreen = 12; tBlue = 16; } 
+            else { tPurple = 5; tRed = 7; tYellow = 10; tGreen = 15; tBlue = 20; }
             
-            if (gap >= tBlue) {
-                card.classList.add('status-blue');
-            } else if (gap >= tGreen) {
-                card.classList.add('status-green');
-            } else if (gap >= tYellow) {
-                card.classList.add('status-yellow');
-            } else if (gap >= tRed) {
-                card.classList.add('status-red');
-            } else if (gap >= tPurple) {
-                card.classList.add('status-purple');
-            } else {
-                card.classList.add('status-normal');
-            }
+            if (gap >= tBlue) card.classList.add('status-blue');
+            else if (gap >= tGreen) card.classList.add('status-green');
+            else if (gap >= tYellow) card.classList.add('status-yellow');
+            else if (gap >= tRed) card.classList.add('status-red');
+            else if (gap >= tPurple) card.classList.add('status-purple');
+            else card.classList.add('status-normal');
         }
 
         function saveState() { localStorage.setItem('roulette_ai_history', JSON.stringify(history)); }
