@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Roulette Vision - Full Table Alerts</title>
+    <title>Roulette Vision - Full Odds</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -12,8 +12,8 @@
     <style>
         :root {
             --gold: #D4AF37;
-            --glass-bg: rgba(20, 20, 30, 0.9);
-            --felt-green: #064e3b; /* Color Paño */
+            --glass-bg: rgba(20, 20, 30, 0.92);
+            --felt-green: #064e3b;
             --alert-orange: #FF5F1F;
         }
 
@@ -22,19 +22,18 @@
             color: #e2e8f0;
             font-family: 'Montserrat', sans-serif;
             touch-action: manipulation;
-            overflow: hidden; /* Evitar scroll en la app completa */
+            overflow: hidden;
         }
 
-        /* --- CLASE MAESTRA DE ALERTA (PARPADEO NARANJA) --- */
-        /* Esta clase se aplicará a Números, Docenas, Columnas y Chances */
+        /* --- CLASE DE ALERTA (PARPADEO) --- */
         .board-alert {
-            background-color: rgba(255, 95, 31, 0.6) !important; /* Fondo Naranja */
-            box-shadow: inset 0 0 0 2px #fff, 0 0 20px var(--alert-orange) !important;
+            background-color: rgba(255, 95, 31, 0.65) !important;
+            box-shadow: inset 0 0 0 2px #fff, 0 0 25px var(--alert-orange) !important;
             border-color: #fff !important;
             color: #fff !important;
             text-shadow: 0 0 5px #000;
             z-index: 50;
-            animation: pulse-critical 0.6s infinite alternate;
+            animation: pulse-critical 0.5s infinite alternate;
         }
 
         @keyframes pulse-critical {
@@ -42,10 +41,10 @@
             to { background-color: rgba(255, 95, 31, 0.9); transform: scale(1.02); }
         }
 
-        /* --- LAYOUT DE LA MESA (CSS GRID) --- */
+        /* --- LAYOUT DEL TABLERO (CSS GRID) --- */
         .roulette-board-grid {
             display: grid;
-            /* Estructura: [Suertes] [Docenas] [N1] [N2] [N3] */
+            /* [Suertes] [Docenas] [N1] [N2] [N3] */
             grid-template-columns: 35px 35px 1fr 1fr 1fr; 
             grid-template-rows: 45px repeat(12, 1fr) 35px; /* 0, 12 filas num, Columnas */
             gap: 2px;
@@ -57,7 +56,6 @@
             height: 100%;
         }
 
-        /* CELDAS BASE */
         .tbl-cell {
             display: flex; align-items: center; justify-content: center;
             font-weight: 700; font-size: 0.85rem;
@@ -67,28 +65,23 @@
         }
         .tbl-cell:active { transform: scale(0.9); }
 
-        /* ZONAS ESPECÍFICAS DEL TABLERO */
+        /* ZONAS */
         .cell-zero {
             grid-column: 3 / span 3; grid-row: 1;
             background: linear-gradient(to bottom, #15803d, #14532d);
             font-size: 1.2rem; border-radius: 4px 4px 0 0;
         }
-
-        /* NÚMEROS */
         .cell-num { border-radius: 2px; position: relative; }
         .bg-tbl-red { background-color: #b91c1c; }
         .bg-tbl-black { background-color: #1f2937; }
 
-        /* DOCENAS (VERTICALES) */
         .cell-doz {
             grid-column: 2; grid-row: span 4;
             writing-mode: vertical-rl; transform: rotate(180deg);
             font-size: 0.7rem; letter-spacing: 2px;
-            background-color: rgba(6, 78, 59, 0.5);
-            color: #a7f3d0;
+            background-color: rgba(6, 78, 59, 0.5); color: #a7f3d0;
         }
 
-        /* SUERTES (VERTICALES) */
         .cell-chance {
             grid-column: 1; grid-row: span 2;
             writing-mode: vertical-rl; transform: rotate(180deg);
@@ -98,21 +91,17 @@
         .chance-red { background-color: #b91c1c; color: white; }
         .chance-black { background-color: #1f2937; color: white; }
 
-        /* COLUMNAS (HORIZONTAL ABAJO) */
         .cell-col {
             grid-row: 14; 
             font-size: 0.7rem; font-weight: 800;
             background-color: rgba(6, 78, 59, 0.5);
         }
 
-        /* TRACKER IZQUIERDO (Estilos existentes) */
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
+        /* TRACKER IZQUIERDO */
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        
         .tracker-cell {
-            border: 1px solid rgba(255,255,255,0.1); padding: 4px;
+            border: 1px solid rgba(255,255,255,0.1); padding: 2px;
             border-radius: 6px; display: flex; flex-direction: column; 
             align-items: center; justify-content: center;
         }
@@ -120,6 +109,8 @@
         .status-red { background: rgba(220, 38, 38, 0.3); border-color: #ef4444; }
         .status-yellow { background: rgba(202, 138, 4, 0.3); border-color: #eab308; }
         .status-green { background: rgba(22, 163, 74, 0.3); border-color: #22c55e; }
+        .status-blue { background: rgba(30, 58, 138, 0.4); border-color: #3b82f6; }
+        
         .status-orange-combo { 
             background: rgba(255, 95, 31, 0.3); 
             border: 2px solid var(--alert-orange); 
@@ -128,11 +119,9 @@
         }
         @keyframes pulse-tracker { 50% { border-color: #fff; } }
 
-        /* UTILS */
+        /* SCROLL Y TEXTOS */
         .text-gold { color: var(--gold); }
         ::-webkit-scrollbar { width: 0; }
-        
-        /* SCANNER */
         #scanOverlay { background: rgba(0,0,0,0.95); z-index: 100; }
         .scan-line { width: 100%; height: 2px; background: #22c55e; animation: scan 1.5s infinite; }
         @keyframes scan { 0% {top:0} 100% {top:100%} }
@@ -195,12 +184,17 @@
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scroll">
+            <div class="flex-1 overflow-y-auto space-y-2 pr-1">
+                
                 <div class="grid grid-cols-2 gap-1">
                     <div id="track-red" class="tracker-cell status-normal"><span class="text-red-500 font-bold text-[10px]">ROJO</span><span id="val-red" class="tracker-val text-white">0</span></div>
                     <div id="track-black" class="tracker-cell status-normal"><span class="text-gray-400 font-bold text-[10px]">NEGRO</span><span id="val-black" class="tracker-val text-white">0</span></div>
+                    
                     <div id="track-even" class="tracker-cell status-normal"><span class="text-blue-300 font-bold text-[10px]">PAR</span><span id="val-even" class="tracker-val text-white">0</span></div>
                     <div id="track-odd" class="tracker-cell status-normal"><span class="text-blue-300 font-bold text-[10px]">IMPAR</span><span id="val-odd" class="tracker-val text-white">0</span></div>
+
+                    <div id="track-low" class="tracker-cell status-normal"><span class="text-yellow-500 font-bold text-[10px]">1-18</span><span id="val-low" class="tracker-val text-white">0</span></div>
+                    <div id="track-high" class="tracker-cell status-normal"><span class="text-yellow-500 font-bold text-[10px]">19-36</span><span id="val-high" class="tracker-val text-white">0</span></div>
                 </div>
 
                 <div class="text-[9px] text-center text-gray-500 uppercase font-bold tracking-widest mt-1 bg-white/5 rounded py-0.5">Docenas</div>
@@ -217,7 +211,7 @@
                     <div id="track-col3" class="tracker-cell status-normal"><span class="text-[9px]">C3</span><span id="val-col3" class="tracker-val">0</span></div>
                 </div>
 
-                <div class="text-[9px] text-center text-gray-500 uppercase font-bold tracking-widest mt-2">Últimos</div>
+                <div class="text-[9px] text-center text-gray-500 uppercase font-bold tracking-widest mt-2">Historial</div>
                 <div id="historyList" class="flex flex-wrap gap-1 justify-center pb-2"></div>
             </div>
         </div>
@@ -228,12 +222,12 @@
                 
                 <div class="tbl-cell cell-zero" onclick="addNumber(0)" id="btn-0">0</div>
 
-                <div class="tbl-cell cell-chance" style="grid-row: 2 / span 2;">1-18</div>
+                <div class="tbl-cell cell-chance" id="board-low" style="grid-row: 2 / span 2;">1-18</div>
                 <div class="tbl-cell cell-chance" id="board-even" style="grid-row: 4 / span 2;">PAR</div>
                 <div class="tbl-cell cell-chance chance-red" id="board-red" style="grid-row: 6 / span 2;"><i class="fas fa-diamond text-lg"></i></div>
                 <div class="tbl-cell cell-chance chance-black" id="board-black" style="grid-row: 8 / span 2;"><i class="fas fa-diamond text-lg"></i></div>
                 <div class="tbl-cell cell-chance" id="board-odd" style="grid-row: 10 / span 2;">IMP</div>
-                <div class="tbl-cell cell-chance" style="grid-row: 12 / span 2;">19-36</div>
+                <div class="tbl-cell cell-chance" id="board-high" style="grid-row: 12 / span 2;">19-36</div>
 
                 <div class="tbl-cell cell-doz" id="board-doz1" style="grid-row: 2 / span 4;">1ª DOC</div>
                 <div class="tbl-cell cell-doz" id="board-doz2" style="grid-row: 6 / span 4;">2ª DOC</div>
@@ -255,7 +249,6 @@
     <script>
         // --- CONFIGURACIÓN Y DATOS ---
         const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-        // Los negros son el resto, calculados dinámicamente o definidos si prefieres
         
         const COL_1 = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34];
         const COL_2 = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35];
@@ -280,7 +273,7 @@
             }, 1000);
         }
         function startTimer() {
-            const el = document.getElementById('sessionTimer'); // Si existiera un timer visual
+            const el = document.getElementById('sessionTimer');
             if(timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 if(timeLeft <= 0) { clearInterval(timerInterval); return; }
@@ -292,7 +285,6 @@
         // --- RENDERIZADO DEL TABLERO ---
         function renderGrid() {
             const grid = document.getElementById('boardGrid');
-            // Generamos botones 1-36
             for (let i = 1; i <= 36; i++) {
                 const btn = document.createElement('div');
                 const isRed = RED_NUMBERS.includes(i);
@@ -301,11 +293,9 @@
                 btn.innerText = i;
                 btn.onclick = () => addNumber(i);
 
-                // CÁLCULO DE POSICIÓN CSS GRID
-                // Filas 2 a 13. Columnas 3, 4, 5.
+                // CSS GRID MAPPING
                 const row = Math.floor((i - 1) / 3) + 2; 
                 const col = ((i - 1) % 3) + 3; 
-
                 btn.style.gridRow = row;
                 btn.style.gridColumn = col;
 
@@ -313,10 +303,9 @@
             }
         }
 
-        // --- GESTIÓN DE NÚMEROS ---
+        // --- GESTIÓN DE JUEGO ---
         function addNumber(num) {
             history.unshift(num);
-            // Efecto visual click
             const btn = document.getElementById(`btn-${num}`) || document.getElementById(`btn-0`);
             if(btn) {
                 btn.style.transform = "scale(0.8)";
@@ -330,35 +319,27 @@
         function closeModal() { document.getElementById('resetModal').classList.add('hidden'); }
         function fullReset() { history = []; saveState(); updateUI(); resetTimer(); closeModal(); }
 
-        // --- MODALES Y OCR ---
+        // --- IMPORTAR / OCR ---
         function openTextModal() { document.getElementById('textModal').classList.remove('hidden'); }
         function closeTextModal() { document.getElementById('textModal').classList.add('hidden'); }
-        
         function processBulkText() {
             const txt = document.getElementById('bulkTextInput').value;
             const nums = txt.match(/\b([0-9]|[1-2][0-9]|3[0-6])\b/g);
             if(nums) { nums.reverse().forEach(n => addNumber(parseInt(n))); closeTextModal(); document.getElementById('bulkTextInput').value=''; }
         }
-
         function processImage(input) {
             if (!input.files || !input.files[0]) return;
-            // Aquí iría la lógica de overlay de carga si se desea
-            Tesseract.recognize(input.files[0], 'eng')
-            .then(({ data: { text } }) => {
+            Tesseract.recognize(input.files[0], 'eng').then(({ data: { text } }) => {
                 const nums = text.match(/\b([0-9]|[1-2][0-9]|3[0-6])\b/g);
-                if (nums) {
-                    let c = 0;
-                    nums.reverse().forEach(n => { addNumber(parseInt(n)); c++; });
-                    alert(`✅ ${c} Números detectados.`);
-                } else { alert("⚠️ Sin números claros."); }
+                if (nums) { nums.reverse().forEach(n => addNumber(parseInt(n))); alert(`✅ ${nums.length} Números.`); }
             }).finally(() => { input.value = ''; });
         }
 
-        // --- UI UPDATE CORE ---
+        // --- UI CORE ---
         function updateUI() {
             document.getElementById('totalSpins').innerText = history.length;
             renderHistory();
-            updateDashboard(); // Lógica de alertas y tablero
+            updateDashboard(); // Alertas
             calculateRecoveryAverage();
         }
 
@@ -374,89 +355,70 @@
             });
         }
 
-        // --- LÓGICA DE ALERTAS Y TABLERO ---
+        // --- CEREBRO: ALERTAS Y TABLERO ---
         function updateDashboard() {
             const gaps = calculateGaps();
             const stats = calculateStats();
 
-            // 1. Actualizar Trackers Izquierdos (Colores y números)
             updateTrackers(gaps, stats);
-
-            // 2. BOARD VISION: ILUMINACIÓN DEL TABLERO
             clearBoardAlerts();
-            const umbral = 2; // Umbral de activación
 
-            // Función para marcar zonas grandes (Docenas, Colores, etc)
+            const umbral = 2; // Umbral de atraso para activar alertas
+
+            // Helpers Visuales
             function markZone(id) { 
                 const el = document.getElementById(id);
-                const trackEl = document.getElementById(id.replace('board', 'track')); // También marca el tracker izquierdo
+                const tr = document.getElementById(id.replace('board', 'track'));
                 if(el) el.classList.add('board-alert');
-                if(trackEl) trackEl.classList.add('status-orange-combo');
+                if(tr) tr.classList.add('status-orange-combo');
+            }
+            function highlight(fn) {
+                for(let i=1; i<=36; i++) { if(fn(i)) document.getElementById(`btn-${i}`)?.classList.add('board-alert'); }
             }
 
-            // Función para iluminar intersecciones de números
-            function highlightNums(filterFn) {
-                for(let i=1; i<=36; i++) {
-                    if (filterFn(i)) document.getElementById(`btn-${i}`)?.classList.add('board-alert');
-                }
-            }
+            // 1. COMBOS SIMPLES (Color/Paridad)
+            if (gaps.red >= umbral && gaps.even >= umbral) { markZone('board-red'); markZone('board-even'); highlight(n => RED_NUMBERS.includes(n) && n%2===0); }
+            if (gaps.red >= umbral && gaps.odd >= umbral) { markZone('board-red'); markZone('board-odd'); highlight(n => RED_NUMBERS.includes(n) && n%2!==0); }
+            if (gaps.black >= umbral && gaps.even >= umbral) { markZone('board-black'); markZone('board-even'); highlight(n => !RED_NUMBERS.includes(n) && n%2===0); }
+            if (gaps.black >= umbral && gaps.odd >= umbral) { markZone('board-black'); markZone('board-odd'); highlight(n => !RED_NUMBERS.includes(n) && n%2!==0); }
 
-            // A. COMBOS SIMPLES (Color + Paridad)
-            // Lógica: Si Rojo y Par están atrasados, ilumina el botón "ROJO", el botón "PAR" y los números rojos pares.
-            if (gaps.red >= umbral && gaps.even >= umbral) {
-                markZone('board-red'); markZone('board-even');
-                highlightNums(n => RED_NUMBERS.includes(n) && n%2===0);
-            }
-            if (gaps.red >= umbral && gaps.odd >= umbral) {
-                markZone('board-red'); markZone('board-odd');
-                highlightNums(n => RED_NUMBERS.includes(n) && n%2!==0);
-            }
-            if (gaps.black >= umbral && gaps.even >= umbral) {
-                markZone('board-black'); markZone('board-even');
-                highlightNums(n => !RED_NUMBERS.includes(n) && n%2===0);
-            }
-            if (gaps.black >= umbral && gaps.odd >= umbral) {
-                markZone('board-black'); markZone('board-odd');
-                highlightNums(n => !RED_NUMBERS.includes(n) && n%2!==0);
-            }
+            // 2. COMBOS BAJO/ALTO + COLOR (NUEVO)
+            // Bajo (1-18)
+            if (gaps.low >= umbral && gaps.red >= umbral) { markZone('board-low'); markZone('board-red'); highlight(n => n<=18 && RED_NUMBERS.includes(n)); }
+            if (gaps.low >= umbral && gaps.black >= umbral) { markZone('board-low'); markZone('board-black'); highlight(n => n<=18 && !RED_NUMBERS.includes(n)); }
+            // Alto (19-36)
+            if (gaps.high >= umbral && gaps.red >= umbral) { markZone('board-high'); markZone('board-red'); highlight(n => n>=19 && RED_NUMBERS.includes(n)); }
+            if (gaps.high >= umbral && gaps.black >= umbral) { markZone('board-high'); markZone('board-black'); highlight(n => n>=19 && !RED_NUMBERS.includes(n)); }
 
-            // B. COMBOS TRIPLES (Columnas + Docenas)
-            // Lógica: Si 2 Columnas y 1 Docena están atrasadas.
+            // 3. COMBOS BAJO/ALTO + PARIDAD (NUEVO)
+            if (gaps.low >= umbral && gaps.even >= umbral) { markZone('board-low'); markZone('board-even'); highlight(n => n<=18 && n%2===0); }
+            if (gaps.low >= umbral && gaps.odd >= umbral) { markZone('board-low'); markZone('board-odd'); highlight(n => n<=18 && n%2!==0); }
+            if (gaps.high >= umbral && gaps.even >= umbral) { markZone('board-high'); markZone('board-even'); highlight(n => n>=19 && n%2===0); }
+            if (gaps.high >= umbral && gaps.odd >= umbral) { markZone('board-high'); markZone('board-odd'); highlight(n => n>=19 && n%2!==0); }
+
+            // 4. COMBOS TRIPLES (Columnas + Docenas)
             const colSets = [COL_1, COL_2, COL_3];
             const dozRanges = [[1,12], [13,24], [25,36]];
             
-            // Verificamos pares de columnas atrasadas
-            [[0,1], [0,2], [1,2]].forEach(pair => {
+            [[0,1], [0,2], [1,2]].forEach(pair => { // Pares de Columnas
                 const c1 = pair[0], c2 = pair[1];
-                // Si Col A y Col B tienen atraso
                 if(gaps[`col${c1+1}`] >= umbral && gaps[`col${c2+1}`] >= umbral) {
-                    // Chequeamos si alguna docena TAMBIÉN tiene atraso
                     for(let d=0; d<3; d++) {
                         if(gaps[`doz${d+1}`] >= umbral) {
-                            // BINGO: Iluminamos las 2 columnas, la docena y los números
-                            markZone(`board-col${c1+1}`); 
-                            markZone(`board-col${c2+1}`); 
-                            markZone(`board-doz${d+1}`);
-                            
-                            // Iluminar números que están en (Col A O Col B) Y ADEMÁS en la Docena D
-                            highlightNums(n => (colSets[c1].includes(n) || colSets[c2].includes(n)) && (n >= dozRanges[d][0] && n <= dozRanges[d][1]));
+                            markZone(`board-col${c1+1}`); markZone(`board-col${c2+1}`); markZone(`board-doz${d+1}`);
+                            highlight(n => (colSets[c1].includes(n) || colSets[c2].includes(n)) && (n >= dozRanges[d][0] && n <= dozRanges[d][1]));
                         }
                     }
                 }
             });
 
-            // Verificamos pares de docenas atrasadas (Lógica inversa)
-            [[0,1], [0,2], [1,2]].forEach(pair => {
+            [[0,1], [0,2], [1,2]].forEach(pair => { // Pares de Docenas
                 const d1 = pair[0], d2 = pair[1];
                 if(gaps[`doz${d1+1}`] >= umbral && gaps[`doz${d2+1}`] >= umbral) {
                     for(let c=0; c<3; c++) {
                         if(gaps[`col${c+1}`] >= umbral) {
-                            markZone(`board-doz${d1+1}`); 
-                            markZone(`board-doz${d2+1}`); 
-                            markZone(`board-col${c+1}`);
-                            
-                            // Iluminar números que están en (Doz A O Doz B) Y ADEMÁS en la Columna C
-                            highlightNums(n => ((n >= dozRanges[d1][0] && n <= dozRanges[d1][1]) || (n >= dozRanges[d2][0] && n <= dozRanges[d2][1])) && colSets[c].includes(n));
+                            markZone(`board-doz${d1+1}`); markZone(`board-doz${d2+1}`); markZone(`board-col${c+1}`);
+                            highlight(n => ((n >= dozRanges[d1][0] && n <= dozRanges[d1][1]) || (n >= dozRanges[d2][0] && n <= dozRanges[d2][1])) && colSets[c].includes(n));
                         }
                     }
                 }
@@ -474,21 +436,18 @@
              return {
                 red: g(n=>RED_NUMBERS.includes(n)), black: g(n=>!RED_NUMBERS.includes(n)),
                 even: g(n=>n%2===0), odd: g(n=>n%2!==0),
+                low: g(n=>n>=1&&n<=18), high: g(n=>n>=19&&n<=36), // NUEVOS
                 doz1: g(n=>n<=12), doz2: g(n=>n>12&&n<=24), doz3: g(n=>n>24),
                 col1: g(n=>COL_1.includes(n)), col2: g(n=>COL_2.includes(n)), col3: g(n=>COL_3.includes(n))
              };
         }
 
-        function calculateStats() {
-            // Simplificado para UI visual
-            return { red:0, black:0 }; // (Podemos extender si necesitamos max delays visuales, por ahora usamos gaps)
-        }
+        function calculateStats() { return { red:0, black:0 }; } // Placeholder stats
 
-        function updateTrackers(gaps) {
+        function updateTrackers(gaps, stats) {
             const up = (id, valId, gap) => {
                 const el = document.getElementById(id);
-                const val = document.getElementById(valId);
-                if(val) val.innerText = gap;
+                if(document.getElementById(valId)) document.getElementById(valId).innerText = gap;
                 if(el) {
                     el.className = "tracker-cell";
                     if(gap >= 12) el.classList.add('status-blue');
@@ -500,6 +459,7 @@
             };
             up('track-red', 'val-red', gaps.red); up('track-black', 'val-black', gaps.black);
             up('track-even', 'val-even', gaps.even); up('track-odd', 'val-odd', gaps.odd);
+            up('track-low', 'val-low', gaps.low); up('track-high', 'val-high', gaps.high); // NUEVOS
             up('track-doz1', 'val-doz1', gaps.doz1); up('track-doz2', 'val-doz2', gaps.doz2); up('track-doz3', 'val-doz3', gaps.doz3);
             up('track-col1', 'val-col1', gaps.col1); up('track-col2', 'val-col2', gaps.col2); up('track-col3', 'val-col3', gaps.col3);
         }
@@ -511,19 +471,15 @@
                 document.getElementById('orangeRecoveryPanel').classList.add('opacity-50', 'grayscale');
                 return;
             }
-            // Simulación rápida de promedio (Placeholder inteligente basado en historial)
-            // En producción real, esto iteraría todo el array.
+            // Simulación visual
             const fakeAvg = (Math.random() * 2 + 2).toFixed(1); 
             document.getElementById('avgRecoveryVal').innerText = fakeAvg;
             document.getElementById('recoveryCount').innerText = `${Math.floor(history.length/3)} ev`;
             document.getElementById('orangeRecoveryPanel').classList.remove('opacity-50', 'grayscale');
         }
 
-        function saveState() { localStorage.setItem('roulette_table_v2', JSON.stringify(history)); }
-        function loadState() { 
-            const s = localStorage.getItem('roulette_table_v2'); 
-            if(s) { history = JSON.parse(s); updateUI(); }
-        }
+        function saveState() { localStorage.setItem('roulette_table_v3', JSON.stringify(history)); }
+        function loadState() { const s = localStorage.getItem('roulette_table_v3'); if(s) { history = JSON.parse(s); updateUI(); } }
     </script>
 </body>
 </html>
